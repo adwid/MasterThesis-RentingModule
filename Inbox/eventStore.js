@@ -5,7 +5,7 @@ var esConnection = undefined;
 function connection() {
     if (esConnection === undefined) {
         var connSettings = {};  // Use defaults
-        esConnection = eventStore.createConnection(connSettings, "tcp://eventstore:1113", "LocationModuleInbox");
+        esConnection = eventStore.createConnection(connSettings, "tcp://eventstore:1113", "RentalModuleInbox");
         esConnection.connect();
         esConnection.once('connected', function (tcpEndPoint) {
             console.log('Connected to eventstore at ' + tcpEndPoint.host + ":" + tcpEndPoint.port);

@@ -3,7 +3,7 @@ const esConnection = require('../eventStore').connection();
 const hashObject = require('object-hash');
 const uuidFromString = require('uuid-by-string');
 
-const streamName = "location";
+const streamName = "rental";
 
 function postEvent(content, type) {
     const hash = hashObject(content);
