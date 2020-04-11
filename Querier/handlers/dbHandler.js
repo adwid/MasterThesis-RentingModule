@@ -1,10 +1,12 @@
-const ExampleModel = require('../models/example');
+const PropertyModel = require('../models/property');
 
-function createNew() {
-    const newExample = new ExampleModel({name: "Foo"});
-    return newExample.save();
+function createNewProperty(noteObject) {
+    var content = noteObject.content;
+    content._id = noteObject.id;
+    const newProperty = new PropertyModel(content);
+    return newProperty.save();
 }
 
 module.exports = {
-    createNew
+    createNewProperty
 };
