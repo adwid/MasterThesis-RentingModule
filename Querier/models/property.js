@@ -35,5 +35,6 @@ const PropertySchema = new mongoose.Schema({
 
 PropertySchema.index({owner: 1, name: 1}, {unique: true});
 PropertySchema.index({province: 1, city: 1, name: 1}, {unique: true});
+RentalSchema.index({from: 1}, {unique: true});
 
 module.exports = mongoose.model('Property', PropertySchema);
