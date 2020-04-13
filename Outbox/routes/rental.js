@@ -5,6 +5,7 @@ const axios = require('axios');
 
 const routes = {
     'create':   {inboxRoute:    '/create',  activityGenerator:  requestHandler.generateCreateRentalActivity},
+    'book':     {inboxRoute:    '/book',    activityGenerator:  requestHandler.generateCreateBookActivity},
 };
 
 router.post('/:route', function(req, res, next) {

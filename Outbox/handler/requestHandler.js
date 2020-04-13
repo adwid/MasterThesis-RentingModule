@@ -2,9 +2,16 @@ const createActivityFields = ["@context", "type", "actor", "object", "to"];
 const objectFields = ["@context", "type", "to", "attributedTo", "content", "mediaType"];
 const rentalFields = ["name", "province", "city", "capacity", "price", "showers", "meadow",
     "local", "kitchen", "campfire", "description"];
+const bookFields = ["property", "from", "to"];
 
 function generateCreateRentalActivity(request) {
     const activity = generateCreateObjectActivity(request, objectFields, isValidRental);
+    if (!activity) return undefined;
+    return activity;
+}
+
+function generateCreateBookActivity(request) {
+    const activity = generateCreateObjectActivity(request, objectFields, isValidBook);
     if (!activity) return undefined;
     return activity;
 }
@@ -49,6 +56,23 @@ function isValidRental(content) {
     return true;
 }
 
+function isValidBook(content) {
+    if (!content
+        || !bookFields.every(field => content.hasOwnProperty(field))
+        || !isIsoDate(content.from)
+        || content.duration <= 0
+        || (new Date(content.from)).getTime() <= Date.now()
+        || content.to < content.from
+    ) return false;
+    return true;
+}
+
+function isIsoDate(str) {
+    if (!/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/.test(str)) return false;
+    var d = new Date(str);
+    return d.toISOString()===str;
+}
+
 function rentalNoteToCreateActivity(note) {
     return {
         "@context": "https://www.w3.org/ns/activitystreams",
@@ -61,4 +85,5 @@ function rentalNoteToCreateActivity(note) {
 
 module.exports = {
     generateCreateRentalActivity,
+    generateCreateBookActivity,
 };
