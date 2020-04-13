@@ -1,18 +1,10 @@
 const mongoose = require('mongoose');
+const RentalModel = require('./rental');
 
 const CommentSchema = new mongoose.Schema({
     content: {type: String, minLength: 1, maxLength: 300, required: true},
     by: {type: String, required: true},
     date: {type: Date, required: true},
-});
-
-const RentalSchema = new mongoose.Schema({
-    from: {type: Date, required: true},
-    duration: {type: Number, min: 1, required: true},
-    by: {type: String, required: true},
-    made: {type: Date, required: true},
-}, {
-    _id: false,
 });
 
 const PropertySchema = new mongoose.Schema({
@@ -29,12 +21,12 @@ const PropertySchema = new mongoose.Schema({
     kitchen: {type: Boolean, required: true},
     campfire: {type: Boolean, required: true},
     description: {type: String, default: ""},
-    rentals: {type: [RentalSchema], default: []},
+    rentals: {type: [{type: mongoose.Types.ObjectId, ref: RentalModel.modelName}], default: []},
+    waitingList: {type: [{type: mongoose.Types.ObjectId, ref: RentalModel.modelName}], default: []},
     comments: {type: [CommentSchema], default: []},
 });
 
 PropertySchema.index({owner: 1, name: 1}, {unique: true});
 PropertySchema.index({province: 1, city: 1, name: 1}, {unique: true});
-RentalSchema.index({from: 1}, {unique: true});
 
 module.exports = mongoose.model('Property', PropertySchema);
