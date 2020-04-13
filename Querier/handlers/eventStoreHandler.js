@@ -4,7 +4,8 @@ const db = require('./dbHandler');
 const streamName = "rental";
 
 const eventCallback = {
-    'create': db.createNewProperty,
+    'book':     db.bookProperty,
+    'create':   db.createNewProperty,
 };
 
 esConnection.subscribeToStream(streamName, false, onNewEvent)
