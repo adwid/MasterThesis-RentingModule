@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const RentalSchema = new mongoose.Schema({
-    concern: {type: String, required: true},
+    concern: {type: String, required: true, ref: 'Property'},
     from: {type: Date, required: true},
     to: {type: Date, required: true},
     by: {type: String, required: true},
