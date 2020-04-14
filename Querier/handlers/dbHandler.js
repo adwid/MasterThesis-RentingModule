@@ -39,6 +39,19 @@ function bookProperty(noteObject) {
         });
 }
 
+function getOwnersProperties(owner) {
+    return PropertyModel.find({owner: owner});
+}
+
+function getPropertyDetails(owner, property) {
+    return PropertyModel.findOne({
+        _id: property,
+        owner: owner
+    })
+        .populate('rentals')
+        .populate('waitingList');
+}
+
 function searchIndexOfPreviousRental(rentals, from, to) {
     if (to < from) return -2;
     return searchHelper(rentals, from, to, 0, rentals.length - 1);
@@ -61,4 +74,6 @@ function searchHelper(rentals, from, to, start, end) {
 module.exports = {
     bookProperty,
     createNewProperty,
+    getOwnersProperties,
+    getPropertyDetails,
 };
