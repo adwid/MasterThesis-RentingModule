@@ -60,9 +60,9 @@ function bookProperty(noteObject) {
             content.from = resetTime(content.from);
             content.to = resetTime(content.to);
 
-            if (!doc) return Promise.resolve({err: "Property does not exist"});
+            if (!doc) return Promise.reject({requestErr: "Property does not exist"});
             var index = searchIndexOfPreviousRental(doc.rentals, content.from, content.to);
-            if (index === -2) return Promise.resolve({err: "This booking is in conflict with another one"}); // todo CURRENT test ! (need the ability to accept a booking)
+            if (index === -2) return Promise.reject({requestErr: "This booking is in conflict with another one"});
 
             const rental = new RentalModel({
                 concern: content.property,
@@ -72,7 +72,7 @@ function bookProperty(noteObject) {
                 made: (new Date()).toISOString(),
             });
 
-            return rental.save() // todo catch duplicates
+            return rental.save()
         })
         .then(doc => {
             if (!doc) return Promise.reject("Rental saved but no document -> Adding it to waitingList is impossible");
@@ -83,6 +83,19 @@ function bookProperty(noteObject) {
                     waitingList: doc._id
                 }
             });
+        })
+        .catch(err => {
+            if (!!err && err.errmsg.includes("duplicate")) {
+                err = {
+                    requestErr: "This booking already exists"
+                }
+            }
+            if (!!err && !!err.requestErr) {
+                console.log("Error with the request: " + err.requestErr);
+                // todo inform the request's user
+                return Promise.resolve();
+            }
+            return Promise.reject(err);
         });
 }
 
@@ -140,6 +153,8 @@ function deleteRentals(ids) {
 
 function searchIndexOfPreviousRental(rentals, from, to) {
     if (to < from) return -2;
+    from = new Date(from);
+    to = new Date(to);
     return searchHelper(rentals, from, to, 0, rentals.length - 1);
 }
 
