@@ -52,14 +52,17 @@ function createNewProperty(noteObject) {
     return newProperty.save();
 }
 
-function bookProperty(noteObject) { // todo reset HH:MM:SS
+function bookProperty(noteObject) {
     const content = noteObject.content;
 
     return PropertyModel.findById(content.property).populate('rentals')
         .then(doc => {
+            content.from = resetTime(content.from);
+            content.to = resetTime(content.to);
+
             if (!doc) return Promise.resolve({err: "Property does not exist"});
             var index = searchIndexOfPreviousRental(doc.rentals, content.from, content.to);
-            if (index === -2) return Promise.resolve({err: "This booking is in conflict with another one"}); // todo test ! (need the ability to accept a booking)
+            if (index === -2) return Promise.resolve({err: "This booking is in conflict with another one"}); // todo CURRENT test ! (need the ability to accept a booking)
 
             const rental = new RentalModel({
                 concern: content.property,
@@ -152,6 +155,11 @@ function searchHelper(rentals, from, to, start, end) {
     if (from >= midRental.to)
         return searchHelper(rentals, from, to, mid+1, end);
     return -2;
+}
+
+function resetTime(dateISOString) {
+    var part = dateISOString.split("T");
+    return part[0] + "T00:00:00.000Z"
 }
 
 module.exports = {
