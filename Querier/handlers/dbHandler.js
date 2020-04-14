@@ -4,7 +4,7 @@ const RentalModel = require('../models/rental');
 function acceptRentals(noteObject) {
     const ownerID = noteObject.attributedTo;
     const propertyID = noteObject.content.property;
-    const acceptedBookingsIDs = noteObject.content.bookings;
+    let acceptedBookingsIDs = noteObject.content.bookings;
     let findRequest = {
         _id: propertyID,
         owner: ownerID
@@ -17,11 +17,14 @@ function acceptRentals(noteObject) {
             if (!property) return Promise.resolve();
 
             const acceptedBookings = [];
-            for (var booking of property.waitingList) {
+            let tmp = [];
+            for (var booking of property.waitingList) { // get objects and filter unexisting IDs
                 if (acceptedBookingsIDs.includes(booking._id.toString())) {
+                    tmp.push(booking._id);
                     acceptedBookings.push(booking);
                 }
             }
+            acceptedBookingsIDs = tmp;
 
             const obsoleteBookingsIDs = getObsoleteBookingsID(acceptedBookings, property.waitingList);
             const bookingsToRemove = [...acceptedBookingsIDs, ...obsoleteBookingsIDs];
