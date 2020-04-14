@@ -5,8 +5,8 @@ const { v1: uuid } = require('uuid');
 
 const routes = [
   "accept",
-  "create",
   "book",
+  "create",
 ];
 
 /* Post data to event store */
