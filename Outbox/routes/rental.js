@@ -4,6 +4,7 @@ const requestHandler = require('../handler/requestHandler');
 const axios = require('axios');
 
 const routes = {
+    'accept':   {inboxRoute:    '/accept',  activityGenerator:  requestHandler.generateCreateAcceptActivity},
     'create':   {inboxRoute:    '/create',  activityGenerator:  requestHandler.generateCreateRentalActivity},
     'book':     {inboxRoute:    '/book',    activityGenerator:  requestHandler.generateCreateBookActivity},
 };

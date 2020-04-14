@@ -3,6 +3,13 @@ const objectFields = ["@context", "type", "to", "attributedTo", "content", "medi
 const rentalFields = ["name", "province", "city", "capacity", "price", "showers", "meadow",
     "local", "kitchen", "campfire", "description"];
 const bookFields = ["property", "from", "to"];
+const manageFields = ["property", "bookings"];
+
+function generateCreateAcceptActivity(request) {
+    const activity = generateCreateObjectActivity(request, objectFields, isValidManage);
+    if (!activity) return undefined;
+    return activity;
+}
 
 function generateCreateRentalActivity(request) {
     const activity = generateCreateObjectActivity(request, objectFields, isValidRental);
@@ -67,6 +74,13 @@ function isValidBook(content) {
     return true;
 }
 
+function isValidManage(content) {
+    if (!content
+        || !manageFields.every(field => content.hasOwnProperty(field)))
+        return false;
+    return true;
+}
+
 function isIsoDate(str) {
     if (!/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/.test(str)) return false;
     var d = new Date(str);
@@ -84,6 +98,7 @@ function rentalNoteToCreateActivity(note) {
 }
 
 module.exports = {
+    generateCreateAcceptActivity,
     generateCreateRentalActivity,
     generateCreateBookActivity,
 };

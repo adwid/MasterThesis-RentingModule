@@ -4,6 +4,7 @@ var esHandler = require('../handlers/eventStoreHandler');
 const { v1: uuid } = require('uuid');
 
 const routes = [
+  "accept",
   "create",
   "book",
 ];
