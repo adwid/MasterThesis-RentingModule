@@ -112,6 +112,21 @@ function getPropertyDetails(owner, property) {
         .populate('waitingList');
 }
 
+function rejectBookings(noteObject) {
+    const ownerID = noteObject.attributedTo;
+    const propertyID = noteObject.content.property;
+    const rejectedBookingsIDs = noteObject.content.bookings;
+    deleteRentals(rejectedBookingsIDs);
+    return PropertyModel.findOneAndUpdate({
+        _id: propertyID,
+        owner: ownerID
+    }, {
+        $pull: {
+            waitingList: {$in: rejectedBookingsIDs}
+        }
+    })
+}
+
 /*-------------------------------------------------------------*/
 /* PRIVATE FUNCTIONS */
 /*-------------------------------------------------------------*/
@@ -183,4 +198,5 @@ module.exports = {
     createNewProperty,
     getOwnersProperties,
     getPropertyDetails,
+    rejectBookings,
 };

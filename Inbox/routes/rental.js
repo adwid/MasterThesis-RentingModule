@@ -7,6 +7,7 @@ const routes = [
   "accept",
   "book",
   "create",
+  "reject",
 ];
 
 /* Post data to event store */

@@ -7,6 +7,7 @@ const routes = {
     'accept':   {inboxRoute:    '/accept',  activityGenerator:  requestHandler.generateCreateAcceptActivity},
     'book':     {inboxRoute:    '/book',    activityGenerator:  requestHandler.generateCreateBookActivity},
     'create':   {inboxRoute:    '/create',  activityGenerator:  requestHandler.generateCreateRentalActivity},
+    'reject':   {inboxRoute:    '/reject',  activityGenerator:  requestHandler.generateCreateAcceptActivity},
 };
 
 router.post('/:route', function(req, res, next) {
