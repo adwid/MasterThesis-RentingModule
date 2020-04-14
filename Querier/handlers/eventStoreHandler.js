@@ -4,6 +4,7 @@ const db = require('./dbHandler');
 const streamName = "rental";
 
 const eventCallback = {
+    'accept':   db.acceptRentals,
     'book':     db.bookProperty,
     'create':   db.createNewProperty,
 };

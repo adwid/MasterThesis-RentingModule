@@ -1,6 +1,47 @@
 const PropertyModel = require('../models/property');
 const RentalModel = require('../models/rental');
 
+function acceptRentals(noteObject) {
+    const ownerID = noteObject.attributedTo;
+    const propertyID = noteObject.content.property;
+    const acceptedBookingsIDs = noteObject.content.bookings;
+    let findRequest = {
+        _id: propertyID,
+        owner: ownerID
+    };
+
+    PropertyModel
+        .findOne(findRequest)
+        .populate('waitingList')
+        .then(property => {
+            if (!property) return Promise.resolve();
+
+            const acceptedBookings = [];
+            for (var booking of property.waitingList) {
+                if (acceptedBookingsIDs.includes(booking._id.toString())) {
+                    acceptedBookings.push(booking);
+                }
+            }
+
+            const obsoleteBookingsIDs = getObsoleteBookingsID(acceptedBookings, property.waitingList);
+            const bookingsToRemove = [...acceptedBookingsIDs, ...obsoleteBookingsIDs];
+
+            const updateRequest = {
+                $addToSet: {
+                    rentals: {
+                        $each: acceptedBookingsIDs
+                    }
+                },
+                $pull: {
+                    waitingList: {$in: bookingsToRemove}
+                }
+            };
+
+            deleteRentals(obsoleteBookingsIDs); // todo inform bookers !
+            return PropertyModel.findOneAndUpdate(findRequest, updateRequest);
+        });
+}
+
 function createNewProperty(noteObject) {
     var content = noteObject.content;
     content._id = noteObject.id;
@@ -8,7 +49,7 @@ function createNewProperty(noteObject) {
     return newProperty.save();
 }
 
-function bookProperty(noteObject) {
+function bookProperty(noteObject) { // todo reset HH:MM:SS
     const content = noteObject.content;
 
     return PropertyModel.findById(content.property).populate('rentals')
@@ -52,6 +93,45 @@ function getPropertyDetails(owner, property) {
         .populate('waitingList');
 }
 
+/*-------------------------------------------------------------*/
+/* PRIVATE FUNCTIONS */
+/*-------------------------------------------------------------*/
+
+function getObsoleteBookingsID(acceptedBookings, allBookings) {
+    const obsoleteBookingsID = [];
+    for (const booking of allBookings) {
+        if (acceptedBookings.includes(booking)) {
+            continue;
+        }
+        if (booking.from < (new Date()).toISOString()) {
+            obsoleteBookingsID.push(booking._id);
+        } else {
+            for (const acceptedBooking of acceptedBookings) {
+                //
+                // Negation of next condition (thanks to De Morgan Theorem)
+                // if ((booking.from < acceptedBooking.from && booking.to <= acceptedBooking.from)
+                //     || (booking.from >= acceptedBooking.to && booking.to > acceptedBooking.to))
+                //
+                if ((booking.from >= acceptedBooking.from || booking.to > acceptedBooking.from)
+                    && (booking.from < acceptedBooking.to || booking.to <= acceptedBooking.to)) {
+                    obsoleteBookingsID.push(booking._id);
+                    break;
+                }
+            }
+        }
+    }
+    return obsoleteBookingsID;
+}
+
+function deleteRentals(ids) {
+    if (!Array.isArray(ids) || ids.length === 0) return;
+    RentalModel.deleteMany({
+        _id: {$in: ids}
+    }).catch(err => {
+        console.error("Err while trying to delete some rentals : " + err);
+    });
+}
+
 function searchIndexOfPreviousRental(rentals, from, to) {
     if (to < from) return -2;
     return searchHelper(rentals, from, to, 0, rentals.length - 1);
@@ -72,6 +152,7 @@ function searchHelper(rentals, from, to, start, end) {
 }
 
 module.exports = {
+    acceptRentals,
     bookProperty,
     createNewProperty,
     getOwnersProperties,
