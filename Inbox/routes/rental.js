@@ -6,6 +6,7 @@ const { v1: uuid } = require('uuid');
 const routes = [
   "accept",
   "book",
+  "cancel",
   "create",
   "reject",
 ];

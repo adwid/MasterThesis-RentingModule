@@ -6,6 +6,7 @@ const streamName = "rental";
 const eventCallback = {
     'accept':   db.acceptRentals,
     'book':     db.bookProperty,
+    'cancel':   db.cancelBooking,
     'create':   db.createNewProperty,
     'reject':   db.rejectBookings,
 };

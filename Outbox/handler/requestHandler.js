@@ -4,6 +4,7 @@ const rentalFields = ["name", "province", "city", "capacity", "price", "showers"
     "local", "kitchen", "campfire", "description"];
 const bookFields = ["property", "from", "to"];
 const manageFields = ["property", "bookings"];
+const cancelFields = ["booking"];
 
 function generateCreateAcceptActivity(request) {
     const activity = generateCreateObjectActivity(request, objectFields, isValidManage);
@@ -19,6 +20,12 @@ function generateCreateRentalActivity(request) {
 
 function generateCreateBookActivity(request) {
     const activity = generateCreateObjectActivity(request, objectFields, isValidBook);
+    if (!activity) return undefined;
+    return activity;
+}
+
+function generateCreateCancelActivity(request) {
+    const activity = generateCreateObjectActivity(request, objectFields, isValidCancel);
     if (!activity) return undefined;
     return activity;
 }
@@ -74,6 +81,13 @@ function isValidBook(content) {
     return true;
 }
 
+function isValidCancel(content) {
+    if (!content
+        || !cancelFields.every(field => content.hasOwnProperty(field)))
+        return false;
+    return true;
+}
+
 function isValidManage(content) {
     if (!content
         || !manageFields.every(field => content.hasOwnProperty(field)))
@@ -101,4 +115,5 @@ module.exports = {
     generateCreateAcceptActivity,
     generateCreateRentalActivity,
     generateCreateBookActivity,
+    generateCreateCancelActivity,
 };

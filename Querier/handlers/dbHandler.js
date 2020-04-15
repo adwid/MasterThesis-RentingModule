@@ -45,6 +45,31 @@ function acceptRentals(noteObject) {
         });
 }
 
+function cancelBooking(noteObject) {
+    const bookingID = noteObject.content.booking;
+    const userID = noteObject.attributedTo;
+
+    return RentalModel.findOne({
+        _id: bookingID,
+        by: userID
+    })
+        .populate('concern') // get the property
+        .then(rental => {
+            const property = rental.concern;
+            return PropertyModel.findOneAndUpdate({
+                _id: property._id
+            }, {
+                $pull: {
+                    rentals: {$in: [bookingID]},
+                    waitingList: {$in: [bookingID]}
+                }
+            });
+        })
+        .then(_ => {
+            return deleteRentals([bookingID]);
+        });
+}
+
 function createNewProperty(noteObject) {
     var content = noteObject.content;
     content._id = noteObject.id;
@@ -172,10 +197,11 @@ function getObsoleteBookingsID(acceptedBookings, allBookings) {
 
 function deleteRentals(ids) {
     if (!Array.isArray(ids) || ids.length === 0) return;
-    RentalModel.deleteMany({
+    return RentalModel.deleteMany({
         _id: {$in: ids}
     }).catch(err => {
         console.error("Err while trying to delete some rentals : " + err);
+        return Promise.reject(err);
     });
 }
 
@@ -208,6 +234,7 @@ function resetTime(dateISOString) {
 module.exports = {
     acceptRentals,
     bookProperty,
+    cancelBooking,
     createNewProperty,
     getOwnersProperties,
     getPropertyDetails,
