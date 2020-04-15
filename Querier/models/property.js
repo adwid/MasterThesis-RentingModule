@@ -1,11 +1,6 @@
 const mongoose = require('mongoose');
 const RentalModel = require('./rental');
-
-const CommentSchema = new mongoose.Schema({
-    content: {type: String, minLength: 1, maxLength: 300, required: true},
-    by: {type: String, required: true},
-    date: {type: Date, required: true},
-});
+const CommentModel = require('./comment');
 
 const PropertySchema = new mongoose.Schema({
     _id: String,
@@ -23,7 +18,7 @@ const PropertySchema = new mongoose.Schema({
     description: {type: String, default: ""},
     rentals: {type: [{type: mongoose.Types.ObjectId, ref: RentalModel.modelName}], default: []},
     waitingList: {type: [{type: mongoose.Types.ObjectId, ref: RentalModel.modelName}], default: []},
-    comments: {type: [CommentSchema], default: []},
+    comments: {type: [{type: mongoose.Types.ObjectId, ref: CommentModel.modelName}], default: []},
 });
 
 PropertySchema.index({owner: 1, name: 1}, {unique: true});
