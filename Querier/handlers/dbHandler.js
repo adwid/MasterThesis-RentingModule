@@ -116,15 +116,28 @@ function rejectBookings(noteObject) {
     const ownerID = noteObject.attributedTo;
     const propertyID = noteObject.content.property;
     const rejectedBookingsIDs = noteObject.content.bookings;
-    deleteRentals(rejectedBookingsIDs);
     return PropertyModel.findOneAndUpdate({
         _id: propertyID,
         owner: ownerID
     }, {
         $pull: {
+            rentals: {$in: rejectedBookingsIDs},
             waitingList: {$in: rejectedBookingsIDs}
         }
-    })
+    }).then(doc => {
+        // filter IDs that are actually not part of the waitingList/rentals
+        const correctlyRejected = [];
+        for (const elem of doc.waitingList) {
+            if (rejectedBookingsIDs.includes(elem.toString()))
+                correctlyRejected.push(elem);
+        }
+        for (const elem of doc.rentals) {
+            if (rejectedBookingsIDs.includes(elem.toString()))
+                correctlyRejected.push(elem);
+        }
+        deleteRentals(correctlyRejected);
+        return Promise.resolve("ok");
+    });
 }
 
 /*-------------------------------------------------------------*/
