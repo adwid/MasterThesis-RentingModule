@@ -5,6 +5,8 @@ const rentalFields = ["name", "province", "city", "capacity", "price", "showers"
 const bookFields = ["property", "from", "to"];
 const manageFields = ["property", "bookings"];
 const cancelFields = ["booking"];
+const commentFields = ["comment","property"];
+const commentLengthMax = 300;
 
 function generateCreateAcceptActivity(request) {
     const activity = generateCreateObjectActivity(request, objectFields, isValidManage);
@@ -26,6 +28,12 @@ function generateCreateBookActivity(request) {
 
 function generateCreateCancelActivity(request) {
     const activity = generateCreateObjectActivity(request, objectFields, isValidCancel);
+    if (!activity) return undefined;
+    return activity;
+}
+
+function generateCreateCommentActivity(request) {
+    const activity = generateCreateObjectActivity(request, objectFields, isValidComment);
     if (!activity) return undefined;
     return activity;
 }
@@ -95,6 +103,14 @@ function isValidManage(content) {
     return true;
 }
 
+function isValidComment(content) {
+    if (!content
+        || !commentFields.every(field => content.hasOwnProperty(field))
+        || content.comment.length > commentLengthMax)
+        return false;
+    return true;
+}
+
 function isIsoDate(str) {
     if (!/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/.test(str)) return false;
     var d = new Date(str);
@@ -116,4 +132,5 @@ module.exports = {
     generateCreateRentalActivity,
     generateCreateBookActivity,
     generateCreateCancelActivity,
+    generateCreateCommentActivity,
 };

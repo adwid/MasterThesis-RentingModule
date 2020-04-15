@@ -1,5 +1,6 @@
 const PropertyModel = require('../models/property');
 const RentalModel = require('../models/rental');
+const CommentModel = require('../models/comment');
 
 function acceptRentals(noteObject) {
     const ownerID = noteObject.attributedTo;
@@ -42,6 +43,58 @@ function acceptRentals(noteObject) {
 
             deleteRentals(obsoleteBookingsIDs); // todo inform bookers !
             return PropertyModel.findOneAndUpdate(findRequest, updateRequest);
+        });
+}
+
+function addComment(noteObject) {
+    const comment = new CommentModel({
+        content: noteObject.content.comment,
+        by: noteObject.attributedTo,
+        date: (new Date()).toISOString(),
+        concern: noteObject.content.property
+    });
+
+    return RentalModel.find({ // find rentals...
+        concern: noteObject.content.property,   // ...that concern the correct property...
+        by: noteObject.attributedTo,            // ...booked by the comment's user...
+        to: {$lt: (new Date()).toISOString()}   // ...and that are done
+    })
+        .then(rentals => {
+            if (rentals.length === 0) {
+                return Promise.reject({requestErr: "You never booked this property" +
+                        " or the rental is not done."})
+            }
+            const rentalsIDs = [];
+            for (const rental of rentals)
+                rentalsIDs.push(rental._id);
+            return PropertyModel.findOne({ // check if property exists
+                _id: noteObject.content.property,
+                rentals: {$elemMatch: {$in: rentalsIDs}}
+            })
+        })
+        .then(property => {
+            if (!property) {
+                return Promise.reject({
+                    requestErr: "The property does not exist, " +
+                        "or you never rented this property"
+                });
+            }
+            return comment.save(); // save the comment
+        })
+        .then(_ => {
+            return PropertyModel.findOneAndUpdate({ // add comment to property
+                _id: noteObject.content.property
+            }, {
+                $push: {comments: comment._id}
+            })
+        })
+        .catch(err => {
+            if (!!err && !!err.requestErr) {
+                console.log("Error with the request: " + err.requestErr);
+                // todo inform the request's user
+                return Promise.resolve();
+            }
+            return Promise.reject(err);
         });
 }
 
@@ -233,6 +286,7 @@ function resetTime(dateISOString) {
 
 module.exports = {
     acceptRentals,
+    addComment,
     bookProperty,
     cancelBooking,
     createNewProperty,

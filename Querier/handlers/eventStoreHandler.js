@@ -7,6 +7,7 @@ const eventCallback = {
     'accept':   db.acceptRentals,
     'book':     db.bookProperty,
     'cancel':   db.cancelBooking,
+    'comment':  db.addComment,
     'create':   db.createNewProperty,
     'reject':   db.rejectBookings,
 };
