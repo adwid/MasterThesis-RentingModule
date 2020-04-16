@@ -183,11 +183,26 @@ function getOwnersProperties(owner) {
 
 function getPropertyDetails(owner, property) {
     return PropertyModel.findOne({
-        _id: property,
-        owner: owner
+        _id: property
     })
         .populate('rentals')
-        .populate('waitingList');
+        .populate('waitingList')
+        .populate('comments')
+        .then(property => {
+            if (!property || property.owner === owner) {
+                return Promise.resolve(property);
+            }
+            property = property.toObject();
+            for (const index in property.waitingList) {
+                delete property.waitingList[index]['_id'];
+                delete property.waitingList[index]['by'];
+            }
+            for (const index in property.rentals) {
+                delete property.rentals[index]['_id'];
+                delete property.rentals[index]['by'];
+            }
+            return Promise.resolve(property);
+        });
 }
 
 function rejectBookings(noteObject) {
