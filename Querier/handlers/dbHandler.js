@@ -177,6 +177,24 @@ function bookProperty(noteObject) {
         });
 }
 
+function getAllUserRentals(uid) {
+    return RentalModel.find({
+        by: uid
+    }).populate('concern')
+        .then(rentals => {
+            const result = [];
+            let tmp;
+            for (const rental of rentals) {
+                tmp = rental.toObject();
+                delete tmp.concern["waitingList"];
+                delete tmp.concern["rentals"];
+                delete tmp.concern["comments"];
+                result.push(tmp);
+            }
+            return Promise.resolve(result);
+        });
+}
+
 function getOwnersProperties(owner) {
     return PropertyModel.find({owner: owner});
 }
@@ -305,6 +323,7 @@ module.exports = {
     bookProperty,
     cancelBooking,
     createNewProperty,
+    getAllUserRentals,
     getOwnersProperties,
     getPropertyDetails,
     rejectBookings,

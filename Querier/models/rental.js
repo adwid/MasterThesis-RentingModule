@@ -9,5 +9,6 @@ const RentalSchema = new mongoose.Schema({
 });
 
 RentalSchema.index({concern:1, from: 1, to:1, by: 1}, {unique: true});
+RentalSchema.index({by: 1});
 
 module.exports = mongoose.model('Rental', RentalSchema);

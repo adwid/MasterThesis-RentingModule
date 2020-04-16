@@ -4,6 +4,7 @@ var logger = require('morgan');
 var database = require('./database');
 
 var propertyRouter = require('./routes/property');
+var rentalRouter = require('./routes/rentals');
 
 var app = express();
 
@@ -22,5 +23,6 @@ database.open()
 require('./handlers/eventStoreHandler');
 
 app.use('/property/', propertyRouter);
+app.use('/rentals/', rentalRouter);
 
 module.exports = app;
