@@ -43,6 +43,13 @@ function acceptRentals(noteObject) {
 
             deleteRentals(obsoleteBookingsIDs); // todo inform bookers !
             return PropertyModel.findOneAndUpdate(findRequest, updateRequest);
+        })
+        .then(_ => {
+            return RentalModel.updateMany({
+                _id: {$in: acceptedBookingsIDs}
+            }, {
+                $set: {accepted: true}
+            })
         });
 }
 
