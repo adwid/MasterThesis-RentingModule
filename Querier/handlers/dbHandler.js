@@ -41,7 +41,7 @@ function acceptRentals(noteObject) {
                 }
             };
 
-            deleteRentals(obsoleteBookingsIDs); // todo inform bookers !
+            deleteSome(RentalModel, obsoleteBookingsIDs); // todo inform bookers !
             return PropertyModel.findOneAndUpdate(findRequest, updateRequest);
         })
         .then(_ => {
@@ -173,7 +173,7 @@ function cancelBooking(noteObject) {
             });
         })
         .then(_ => {
-            return deleteRentals([bookingID]);
+            return deleteSome(RentalModel, [bookingID]);
         });
 }
 
@@ -182,6 +182,21 @@ function createNewProperty(noteObject) {
     content._id = noteObject.id;
     const newProperty = new PropertyModel(content);
     return newProperty.save();
+}
+
+function deleteProperty(noteObject) {
+    const owner = noteObject.attributedTo;
+    const pid = noteObject.content.property;
+    return PropertyModel.findOneAndRemove({
+        _id: pid,
+        owner: owner
+    }).then(doc => {
+        if (!doc) return Promise.resolve();
+        deleteSome(RentalModel, doc.waitingList);
+        deleteSome(RentalModel, doc.rentals); // todo inform
+        deleteSome(CommentModel, doc.comments);
+        return Promise.resolve(doc);
+    });
 }
 
 function getAllUserRentals(uid) {
@@ -258,7 +273,7 @@ function rejectBookings(noteObject) {
             if (rejectedBookingsIDs.includes(elem.toString()))
                 correctlyRejected.push(elem);
         }
-        deleteRentals(correctlyRejected);
+        deleteSome(RentalModel, correctlyRejected);
         return Promise.resolve("ok");
     });
 }
@@ -293,12 +308,12 @@ function getObsoleteBookingsID(acceptedBookings, allBookings) {
     return obsoleteBookingsID;
 }
 
-function deleteRentals(ids) {
+function deleteSome(Model, ids) { // todo check for each usage if it needs to inform concerned users
     if (!Array.isArray(ids) || ids.length === 0) return;
-    return RentalModel.deleteMany({
+    return Model.deleteMany({
         _id: {$in: ids}
     }).catch(err => {
-        console.error("Err while trying to delete some rentals : " + err);
+        console.error("Err while trying to delete some " + Model.modelName + " : " + err);
         return Promise.reject(err);
     });
 }
@@ -348,5 +363,6 @@ module.exports = {
     getOwnersProperties,
     getPropertyDetails,
     getSpecificUserRental,
+    deleteProperty,
     rejectBookings,
 };
