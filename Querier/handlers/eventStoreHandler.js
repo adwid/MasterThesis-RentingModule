@@ -11,6 +11,7 @@ const eventCallback = {
     'create':   db.createNewProperty,
     'delete':   db.deleteProperty,
     'reject':   db.rejectBookings,
+    'update':   db.updateProperty,
 };
 
 esConnection.subscribeToStream(streamName, false, onNewEvent)

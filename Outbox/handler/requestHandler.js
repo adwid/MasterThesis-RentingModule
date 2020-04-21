@@ -1,13 +1,14 @@
 const createActivityFields = ["@context", "type", "actor", "object", "to"];
 const objectFields = ["@context", "type", "to", "attributedTo", "content", "mediaType"];
 const rentalFields = ["name", "province", "city", "capacity", "price", "showers", "meadow",
-    "local", "kitchen", "campfire", "description"];
+    "local", "kitchen", "campfire", "description"]; // todo rename
 const bookFields = ["property", "from", "to"];
 const manageFields = ["property", "bookings"];
 const cancelFields = ["booking"];
 const commentFields = ["comment","property"];
 const deleteFields = ["property"];
 const commentLengthMax = 300;
+const updateFields = rentalFields.filter(field => !["province", "city"].includes(field)); // 'property' in function
 
 function generateCreateAcceptActivity(request) {
     const activity = generateCreateObjectActivity(request, objectFields, isValidManage);
@@ -45,6 +46,12 @@ function generateCreateDeleteActivity(request) {
     return activity;
 }
 
+function generateCreateUpdateActivity(request) {
+    const activity = generateCreateObjectActivity(request, objectFields, isValidUpdate);
+    if (!activity) return undefined;
+    return activity;
+}
+
 function generateCreateObjectActivity(request, objectFields, funIsValidContent) {
     let activity = undefined;
     if (!request) return undefined;
@@ -78,7 +85,7 @@ function isValidNote(object, fields, funIsContentValid) {
     return true;
 }
 
-function isValidRental(content) {
+function isValidRental(content) { // todo rename
     if (!content
         || !rentalFields.every(field => content.hasOwnProperty(field))
     ) return false;
@@ -125,6 +132,14 @@ function isValidDelete(content) {
     return true;
 }
 
+function isValidUpdate(content) {
+    if (!content
+        || !updateFields.some(field => content.hasOwnProperty(field))
+        || !content.hasOwnProperty("property")
+    ) return false;
+    return true;
+}
+
 function isIsoDate(str) {
     if (!/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/.test(str)) return false;
     var d = new Date(str);
@@ -148,4 +163,5 @@ module.exports = {
     generateCreateCancelActivity,
     generateCreateCommentActivity,
     generateCreateDeleteActivity,
+    generateCreateUpdateActivity,
 };

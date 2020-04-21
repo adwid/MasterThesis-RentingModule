@@ -11,6 +11,7 @@ const routes = [
   "create",
   "delete",
   "reject",
+  "update",
 ];
 
 /* Post data to event store */

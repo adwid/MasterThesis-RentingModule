@@ -278,6 +278,26 @@ function rejectBookings(noteObject) {
     });
 }
 
+function updateProperty(noteObject) {
+    const fields = ["name", "capacity", "price", "showers", "meadow", "local", "kitchen",
+        "campfire", "description"];
+    const pid = noteObject.content.property;
+    const owner = noteObject.attributedTo;
+    let setters = {};
+    fields.forEach(field => {
+        if (noteObject.content.hasOwnProperty(field)) {
+            setters[field] = noteObject.content[field]
+        }
+    });
+    if (isEmpty(setters)) return Promise.resolve();
+    return PropertyModel.findOneAndUpdate({
+        _id: pid,
+        owner: owner
+    }, {
+        $set: setters
+    }) // todo catch error if user input does not respect property model ?
+}
+
 /*-------------------------------------------------------------*/
 /* PRIVATE FUNCTIONS */
 /*-------------------------------------------------------------*/
@@ -316,6 +336,10 @@ function deleteSome(Model, ids) { // todo check for each usage if it needs to in
         console.error("Err while trying to delete some " + Model.modelName + " : " + err);
         return Promise.reject(err);
     });
+}
+
+function isEmpty(doc) {
+    return Object.keys(obj).length === 0 && obj.constructor === Object
 }
 
 function searchIndexOfPreviousRental(rentals, from, to) {
@@ -365,4 +389,5 @@ module.exports = {
     getSpecificUserRental,
     deleteProperty,
     rejectBookings,
+    updateProperty,
 };

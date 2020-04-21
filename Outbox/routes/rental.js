@@ -11,6 +11,7 @@ const routes = {
     'create':   {inboxRoute:    '/create',  activityGenerator:  requestHandler.generateCreateRentalActivity}, //todo rename
     'delete':   {inboxRoute:    '/delete',  activityGenerator:  requestHandler.generateCreateDeleteActivity},
     'reject':   {inboxRoute:    '/reject',  activityGenerator:  requestHandler.generateCreateAcceptActivity},
+    'update':   {inboxRoute:    '/update',  activityGenerator:  requestHandler.generateCreateUpdateActivity},
 };
 
 router.post('/:route', function(req, res, next) {
