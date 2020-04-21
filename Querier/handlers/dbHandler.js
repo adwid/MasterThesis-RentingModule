@@ -278,6 +278,33 @@ function rejectBookings(noteObject) {
     });
 }
 
+function searchPropery(query) {
+    let request = {};
+    if (query.hasOwnProperty("capmin")) request.capacity = {"$gte": query.capmin};
+    if (query.hasOwnProperty("capmax"))
+        request.capacity = {"$lte": query.capmax, ...request.capacity};
+    if (query.hasOwnProperty("primin")) request.price = {"$gte": query.primin};
+    if (query.hasOwnProperty("primax"))
+        request.price = {"$lte": query.primax, ...request.price};
+    if (query.hasOwnProperty("shomin")) request.showers = {"$gte": query.shomin};
+    if (query.hasOwnProperty("name")) request.name = {"$eq": query.name};
+    if (query.hasOwnProperty("province")) request.province = {"$eq": query.province};
+    if (query.hasOwnProperty("city")) request.city = {"$eq": query.city};
+    if (query.hasOwnProperty("meadow")) request.meadow = {"$eq": true};
+    if (query.hasOwnProperty("local")) request.local = {"$eq": true};
+    if (query.hasOwnProperty("kitchen")) request.kitchen = {"$eq": true};
+    if (query.hasOwnProperty("campfire")) request.campfire = {"$eq": true};
+    return PropertyModel.find(request)
+        .then(properties => {
+            if (query.hasOwnProperty("avafrom") && query.hasOwnProperty("avato")) {
+                var from = resetTime(query.avafrom);
+                var to = resetTime(query.avato);
+                return removeUnavailableProperties(properties, from, to);
+            }
+            return Promise.resolve(properties);
+        });
+}
+
 function updateProperty(noteObject) {
     const fields = ["name", "capacity", "price", "showers", "meadow", "local", "kitchen",
         "campfire", "description"];
@@ -338,7 +365,7 @@ function deleteSome(Model, ids) { // todo check for each usage if it needs to in
     });
 }
 
-function isEmpty(doc) {
+function isEmpty(obj) {
     return Object.keys(obj).length === 0 && obj.constructor === Object
 }
 
@@ -372,6 +399,24 @@ function cleanRental(rental) {
     return tmp;
 }
 
+function removeUnavailableProperties(properties, from, to) {
+    const promises = [];
+    for (const property of properties) {
+        let promise = property.populate("rentals").execPopulate()
+            .then(property => {
+                if (searchIndexOfPreviousRental(property.rentals, from, to) === -2) {
+                    return Promise.resolve();
+                }
+                return Promise.resolve(property.depopulate('rentals'));
+            });
+        promises.push(promise)
+    }
+    return Promise.all(promises)
+        .then(props => {
+            return Promise.resolve(props.filter(p => p !== undefined))
+        });
+}
+
 function resetTime(dateISOString) {
     var part = dateISOString.split("T");
     return part[0] + "T00:00:00.000Z"
@@ -389,5 +434,6 @@ module.exports = {
     getSpecificUserRental,
     deleteProperty,
     rejectBookings,
+    searchPropery,
     updateProperty,
 };
