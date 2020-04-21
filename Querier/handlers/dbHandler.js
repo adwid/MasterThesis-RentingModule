@@ -190,13 +190,8 @@ function getAllUserRentals(uid) {
     }).populate('concern')
         .then(rentals => {
             const result = [];
-            let tmp;
             for (const rental of rentals) {
-                tmp = rental.toObject();
-                delete tmp.concern["waitingList"];
-                delete tmp.concern["rentals"];
-                delete tmp.concern["comments"];
-                result.push(tmp);
+                result.push(cleanRental(rental));
             }
             return Promise.resolve(result);
         });
@@ -227,6 +222,16 @@ function getPropertyDetails(owner, property) {
                 delete property.rentals[index]['by'];
             }
             return Promise.resolve(property);
+        });
+}
+
+function getSpecificUserRental(uid, rid) {
+    return RentalModel.findOne({
+        _id: rid,
+        by: uid
+    }).populate('concern')
+        .then(rental => {
+            return Promise.resolve(cleanRental(rental));
         });
 }
 
@@ -319,6 +324,15 @@ function searchHelper(rentals, from, to, start, end) {
     return -2;
 }
 
+function cleanRental(rental) {
+    if (!rental) return rental;
+    let tmp = rental.toObject();
+    delete tmp.concern["waitingList"];
+    delete tmp.concern["rentals"];
+    delete tmp.concern["comments"];
+    return tmp;
+}
+
 function resetTime(dateISOString) {
     var part = dateISOString.split("T");
     return part[0] + "T00:00:00.000Z"
@@ -333,5 +347,6 @@ module.exports = {
     getAllUserRentals,
     getOwnersProperties,
     getPropertyDetails,
+    getSpecificUserRental,
     rejectBookings,
 };
