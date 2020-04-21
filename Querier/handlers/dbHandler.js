@@ -105,38 +105,6 @@ function addComment(noteObject) {
         });
 }
 
-function cancelBooking(noteObject) {
-    const bookingID = noteObject.content.booking;
-    const userID = noteObject.attributedTo;
-
-    return RentalModel.findOne({
-        _id: bookingID,
-        by: userID
-    })
-        .populate('concern') // get the property
-        .then(rental => {
-            const property = rental.concern;
-            return PropertyModel.findOneAndUpdate({
-                _id: property._id
-            }, {
-                $pull: {
-                    rentals: {$in: [bookingID]},
-                    waitingList: {$in: [bookingID]}
-                }
-            });
-        })
-        .then(_ => {
-            return deleteRentals([bookingID]);
-        });
-}
-
-function createNewProperty(noteObject) {
-    var content = noteObject.content;
-    content._id = noteObject.id;
-    const newProperty = new PropertyModel(content);
-    return newProperty.save();
-}
-
 function bookProperty(noteObject) {
     const content = noteObject.content;
 
@@ -182,6 +150,38 @@ function bookProperty(noteObject) {
             }
             return Promise.reject(err);
         });
+}
+
+function cancelBooking(noteObject) {
+    const bookingID = noteObject.content.booking;
+    const userID = noteObject.attributedTo;
+
+    return RentalModel.findOne({
+        _id: bookingID,
+        by: userID
+    })
+        .populate('concern') // get the property
+        .then(rental => {
+            const property = rental.concern;
+            return PropertyModel.findOneAndUpdate({
+                _id: property._id
+            }, {
+                $pull: {
+                    rentals: {$in: [bookingID]},
+                    waitingList: {$in: [bookingID]}
+                }
+            });
+        })
+        .then(_ => {
+            return deleteRentals([bookingID]);
+        });
+}
+
+function createNewProperty(noteObject) {
+    var content = noteObject.content;
+    content._id = noteObject.id;
+    const newProperty = new PropertyModel(content);
+    return newProperty.save();
 }
 
 function getAllUserRentals(uid) {
