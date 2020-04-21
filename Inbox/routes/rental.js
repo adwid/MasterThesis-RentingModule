@@ -9,6 +9,7 @@ const routes = [
   "cancel",
   "comment",
   "create",
+  "delete",
   "reject",
 ];
 

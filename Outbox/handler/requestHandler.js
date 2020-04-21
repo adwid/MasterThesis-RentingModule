@@ -6,6 +6,7 @@ const bookFields = ["property", "from", "to"];
 const manageFields = ["property", "bookings"];
 const cancelFields = ["booking"];
 const commentFields = ["comment","property"];
+const deleteFields = ["property"];
 const commentLengthMax = 300;
 
 function generateCreateAcceptActivity(request) {
@@ -34,6 +35,12 @@ function generateCreateCancelActivity(request) {
 
 function generateCreateCommentActivity(request) {
     const activity = generateCreateObjectActivity(request, objectFields, isValidComment);
+    if (!activity) return undefined;
+    return activity;
+}
+
+function generateCreateDeleteActivity(request) {
+    const activity = generateCreateObjectActivity(request, objectFields, isValidDelete);
     if (!activity) return undefined;
     return activity;
 }
@@ -111,6 +118,13 @@ function isValidComment(content) {
     return true;
 }
 
+function isValidDelete(content) {
+    if (!content
+        || !deleteFields.every(field => content.hasOwnProperty(field)))
+        return false;
+    return true;
+}
+
 function isIsoDate(str) {
     if (!/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/.test(str)) return false;
     var d = new Date(str);
@@ -133,4 +147,5 @@ module.exports = {
     generateCreateBookActivity,
     generateCreateCancelActivity,
     generateCreateCommentActivity,
+    generateCreateDeleteActivity,
 };
