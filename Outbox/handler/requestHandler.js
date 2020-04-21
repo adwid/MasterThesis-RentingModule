@@ -1,14 +1,14 @@
 const createActivityFields = ["@context", "type", "actor", "object", "to"];
 const objectFields = ["@context", "type", "to", "attributedTo", "content", "mediaType"];
-const rentalFields = ["name", "province", "city", "capacity", "price", "showers", "meadow",
-    "local", "kitchen", "campfire", "description"]; // todo rename
+const createFields = ["name", "province", "city", "capacity", "price", "showers", "meadow",
+    "local", "kitchen", "campfire", "description"];
 const bookFields = ["property", "from", "to"];
 const manageFields = ["property", "bookings"];
 const cancelFields = ["booking"];
 const commentFields = ["comment","property"];
 const deleteFields = ["property"];
 const commentLengthMax = 300;
-const updateFields = rentalFields.filter(field => !["province", "city"].includes(field)); // 'property' in function
+const updateFields = createFields.filter(field => !["province", "city"].includes(field)); // 'property' in function
 
 function generateCreateAcceptActivity(request) {
     const activity = generateCreateObjectActivity(request, objectFields, isValidManage);
@@ -16,8 +16,8 @@ function generateCreateAcceptActivity(request) {
     return activity;
 }
 
-function generateCreateRentalActivity(request) {
-    const activity = generateCreateObjectActivity(request, objectFields, isValidRental);
+function generateCreateCreateActivity(request) {
+    const activity = generateCreateObjectActivity(request, objectFields, isValidCreate);
     if (!activity) return undefined;
     return activity;
 }
@@ -85,9 +85,9 @@ function isValidNote(object, fields, funIsContentValid) {
     return true;
 }
 
-function isValidRental(content) { // todo rename
+function isValidCreate(content) {
     if (!content
-        || !rentalFields.every(field => content.hasOwnProperty(field))
+        || !createFields.every(field => content.hasOwnProperty(field))
     ) return false;
     return true;
 }
@@ -158,7 +158,7 @@ function rentalNoteToCreateActivity(note) {
 
 module.exports = {
     generateCreateAcceptActivity,
-    generateCreateRentalActivity,
+    generateCreateCreateActivity,
     generateCreateBookActivity,
     generateCreateCancelActivity,
     generateCreateCommentActivity,

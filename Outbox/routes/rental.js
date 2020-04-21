@@ -8,7 +8,7 @@ const routes = {
     'book':     {inboxRoute:    '/book',    activityGenerator:  requestHandler.generateCreateBookActivity},
     'cancel':   {inboxRoute:    '/cancel',  activityGenerator:  requestHandler.generateCreateCancelActivity},
     'comment':  {inboxRoute:    '/comment', activityGenerator:  requestHandler.generateCreateCommentActivity},
-    'create':   {inboxRoute:    '/create',  activityGenerator:  requestHandler.generateCreateRentalActivity}, //todo rename
+    'create':   {inboxRoute:    '/create',  activityGenerator:  requestHandler.generateCreateCreateActivity},
     'delete':   {inboxRoute:    '/delete',  activityGenerator:  requestHandler.generateCreateDeleteActivity},
     'reject':   {inboxRoute:    '/reject',  activityGenerator:  requestHandler.generateCreateAcceptActivity},
     'update':   {inboxRoute:    '/update',  activityGenerator:  requestHandler.generateCreateUpdateActivity},
