@@ -10,6 +10,6 @@ RUN npm install
 
 COPY . /app/src/
 
-EXPOSE 3000
+EXPOSE ${HOST_PORT} ${HOST_PORT}
 
 CMD ["npm", "start"]

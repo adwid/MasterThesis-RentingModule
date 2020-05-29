@@ -25,7 +25,7 @@ router.post('/:route', function(req, res, next) {
         res.status(400).end();
         return;
     }
-    axios.post('http://10.42.0.1:' + process.env.RENTAL_INBOX_PORT + '/rental/secretary' + currentRoute.inboxRoute, activity)
+    axios.post(process.env.PREFIX + process.env.HOST + ':' + process.env.RENTAL_INBOX_PORT + '/rental/secretary' + currentRoute.inboxRoute, activity)
         .then(_ => res.status(201).end())
         .catch(err => {
             console.error("Error(s) while forwarding to secretary : " + err);

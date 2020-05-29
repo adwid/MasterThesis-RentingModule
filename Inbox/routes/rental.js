@@ -22,8 +22,8 @@ router.post('/secretary/:route', function(req, res, next) {
   }
   let eventType = req.params.route;
   let activity = req.body;
-  activity.object.id = "http://10.42.0.1:" + process.env.RENTAL_QUERIER_PORT + "/rental/" + uuid();
-  activity.id = "http://10.42.0.1:" + process.env.RENTAL_QUERIER_PORT + "/rental/" + uuid();
+  activity.object.id = process.env.PREFIX + process.env.HOST + ":" + process.env.RENTAL_QUERIER_PORT + "/rental/" + uuid();
+  activity.id = process.env.PREFIX + process.env.HOST + ":" + process.env.RENTAL_QUERIER_PORT + "/rental/" + uuid();
   if (eventType === "create") {
     activity.object.content.owner = activity.actor;
   }
