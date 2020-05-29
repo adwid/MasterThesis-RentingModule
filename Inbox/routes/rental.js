@@ -4,42 +4,49 @@ var esHandler = require('../handlers/eventStoreHandler');
 const { v1: uuid } = require('uuid');
 
 const routes = [
-  "accept",
-  "book",
-  "cancel",
-  "comment",
-  "create",
-  "delete",
-  "reject",
-  "update",
+    "accept",
+    "book",
+    "cancel",
+    "comment",
+    "create",
+    "delete",
+    "reject",
+    "update",
 ];
 
 /* Post data to event store */
 router.post('/secretary/:route', function(req, res, next) {
-  if (!routes.includes(req.params.route)) {
-    next();
-    return;
-  }
-  let eventType = req.params.route;
-  let activity = req.body;
-  activity.object.id = process.env.PREFIX + process.env.HOST + ":" + process.env.RENTAL_QUERIER_PORT + "/rental/" + uuid();
-  activity.id = process.env.PREFIX + process.env.HOST + ":" + process.env.RENTAL_QUERIER_PORT + "/rental/" + uuid();
-  if (eventType === "create") {
-    activity.object.content.owner = activity.actor;
-  }
-  postEvent(activity, eventType, res);
+    if (!routes.includes(req.params.route)) {
+        next();
+        return;
+    }
+    let eventType = req.params.route;
+    let activity = req.body;
+    activity.object.id = process.env.PREFIX + process.env.HOST + ":" + process.env.RENTAL_QUERIER_PORT + "/rental/" + uuid();
+    activity.id = process.env.PREFIX + process.env.HOST + ":" + process.env.RENTAL_QUERIER_PORT + "/rental/" + uuid();
+    if (eventType === "create") {
+        activity.object.content.owner = activity.actor;
+    }
+    postEvent(activity, eventType, res);
+});
+
+router.post('/message', function (req, res) {
+    let activity = req.body;
+    activity.object.id = process.env.PREFIX + process.env.HOST + ":" + process.env.RENTAL_QUERIER_PORT + "/rental/" + uuid();
+    activity.id = process.env.PREFIX + process.env.HOST + ":" + process.env.RENTAL_QUERIER_PORT + "/rental/" + uuid();
+    postEvent(activity, "message", res);
 });
 
 function postEvent(activity, eventType, res) {
-  esHandler.postEvent(activity, eventType)
-      .then(() => {
-        res.status(201).end()
-      })
-      .catch(() => {
-        res.status(500).json({
-          error: "Internal error. Please try later or contact admins."
+    esHandler.postEvent(activity, eventType)
+        .then(() => {
+            res.status(201).end()
+        })
+        .catch(() => {
+            res.status(500).json({
+                error: "Internal error. Please try later or contact admins."
+            });
         });
-      });
 }
 
 module.exports = router;

@@ -1,8 +1,10 @@
 const PropertyModel = require('../models/property');
 const RentalModel = require('../models/rental');
 const CommentModel = require('../models/comment');
+const MessageModel = require('../models/message');
 
-function acceptRentals(noteObject) {
+function acceptRentals(activity) {
+    const noteObject = activity.object;
     const ownerID = noteObject.attributedTo;
     const propertyID = noteObject.content.property;
     let acceptedBookingsIDs = noteObject.content.bookings;
@@ -53,7 +55,8 @@ function acceptRentals(noteObject) {
         });
 }
 
-function addComment(noteObject) {
+function addComment(activity) {
+    const noteObject = activity.object;
     const comment = new CommentModel({
         content: noteObject.content.comment,
         by: noteObject.attributedTo,
@@ -105,7 +108,8 @@ function addComment(noteObject) {
         });
 }
 
-function bookProperty(noteObject) {
+function bookProperty(activity) {
+    const noteObject = activity.object;
     const content = noteObject.content;
 
     return PropertyModel.findById(content.property).populate('rentals')
@@ -152,7 +156,8 @@ function bookProperty(noteObject) {
         });
 }
 
-function cancelBooking(noteObject) {
+function cancelBooking(activity) {
+    const noteObject = activity.object;
     const bookingID = noteObject.content.booking;
     const userID = noteObject.attributedTo;
 
@@ -177,14 +182,16 @@ function cancelBooking(noteObject) {
         });
 }
 
-function createNewProperty(noteObject) {
+function createNewProperty(activity) {
+    const noteObject = activity.object;
     var content = noteObject.content;
     content._id = noteObject.id;
     const newProperty = new PropertyModel(content);
     return newProperty.save();
 }
 
-function deleteProperty(noteObject) {
+function deleteProperty(activity) {
+    const noteObject = activity.object;
     const owner = noteObject.attributedTo;
     const pid = noteObject.content.property;
     return PropertyModel.findOneAndRemove({
@@ -250,7 +257,8 @@ function getSpecificUserRental(uid, rid) {
         });
 }
 
-function rejectBookings(noteObject) {
+function rejectBookings(activity) {
+    const noteObject = activity.object;
     const ownerID = noteObject.attributedTo;
     const propertyID = noteObject.content.property;
     const rejectedBookingsIDs = noteObject.content.bookings;
@@ -305,7 +313,31 @@ function searchPropery(query) {
         });
 }
 
-function updateProperty(noteObject) {
+function storeMessage(activity) {
+    const promises = [];
+    const to = Array.isArray(activity.to) ? activity.to : [activity.to];
+    for (const actor of to) {
+        let url = new URL(actor);
+        // only store message for users in the same domain than the current instance :
+        if (url.hostname === process.env.HOST)
+            promises.push(storeMessageAux(activity, actor));
+    }
+    return Promise.all(promises);
+}
+
+function storeMessageAux(activity, recipient) {
+    const newMessage = new MessageModel({
+        url: activity.id,
+        to: recipient
+    });
+    return newMessage.save()
+        .catch(err => {
+            console.error("[ERR] not able to store a message in DB : " + err);
+        });
+}
+
+function updateProperty(activity) {
+    const noteObject = activity.object;
     const fields = ["name", "capacity", "price", "showers", "meadow", "local", "kitchen",
         "campfire", "description"];
     const pid = noteObject.content.property;
@@ -435,5 +467,6 @@ module.exports = {
     deleteProperty,
     rejectBookings,
     searchPropery,
+    storeMessage,
     updateProperty,
 };

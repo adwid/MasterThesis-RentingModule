@@ -1,17 +1,19 @@
 const esConnection = require('../eventStore').connection();
 const db = require('./dbHandler');
+const fw = require('./forwardHandler');
 
 const streamName = "rental";
 
 const eventCallback = {
-    'accept':   db.acceptRentals,
-    'book':     db.bookProperty,
-    'cancel':   db.cancelBooking,
-    'comment':  db.addComment,
-    'create':   db.createNewProperty,
-    'delete':   db.deleteProperty,
-    'reject':   db.rejectBookings,
-    'update':   db.updateProperty,
+    'accept':   {dbFunction: db.acceptRentals,      fwFunction: undefined},
+    'book':     {dbFunction: db.bookProperty,       fwFunction: undefined},
+    'cancel':   {dbFunction: db.cancelBooking,      fwFunction: undefined},
+    'comment':  {dbFunction: db.addComment,         fwFunction: undefined},
+    'create':   {dbFunction: db.createNewProperty,  fwFunction: fw.forwardToOwner},
+    'delete':   {dbFunction: db.deleteProperty,     fwFunction: undefined},
+    'message':  {dbFunction: db.storeMessage,       fwFunction: undefined},
+    'reject':   {dbFunction: db.rejectBookings,     fwFunction: undefined},
+    'update':   {dbFunction: db.updateProperty,     fwFunction: undefined},
 };
 
 esConnection.subscribeToStream(streamName, false, onNewEvent)
@@ -30,12 +32,15 @@ function onNewEvent(sub, event) {
         console.error("[ERR] ES : unkown event's type : " + eventType);
         return;
     }
-    var callback = eventCallback[eventType];
-    callback(activity.object)
-        .then(objectSaved => {
-            if (!objectSaved) return Promise.resolve();
-            console.log("Event " + eventType + ": DB updated");
-            return Promise.resolve();
+    var updateDB = eventCallback[eventType].dbFunction;
+    var forwardInformation = eventCallback[eventType].fwFunction;
+    updateDB(activity)
+        .then(dbUpdateResult => {
+            if (!dbUpdateResult) return Promise.resolve();
+            console.log("Event \'" + eventType + "\': DB updated");
+            if (!forwardInformation) return Promise.resolve();
+            else return forwardInformation(eventType, activity.actor, dbUpdateResult);
         })
-        .catch(err => console.log ("" + err));
+        .then(_ => console.log("Event \'" + eventType + "\' correctly processed."))
+        .catch(err => console.error("[ERR] ES/onNewEvent : " + err));
 }
