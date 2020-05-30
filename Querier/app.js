@@ -24,7 +24,7 @@ database.open()
 require('./handlers/eventStoreHandler');
 
 app.use('/rental/message', messageRouter);
-app.use('/property/', propertyRouter);
+app.use('/rental/property/', propertyRouter);
 app.use('/rental/', rentalRouter);
 
 module.exports = app;
