@@ -5,6 +5,7 @@ var database = require('./database');
 
 var propertyRouter = require('./routes/property');
 var rentalRouter = require('./routes/rentals');
+var messageRouter = require("./routes/message");
 
 var app = express();
 
@@ -22,6 +23,7 @@ database.open()
 // initialize the event store subscription
 require('./handlers/eventStoreHandler');
 
+app.use('/rental/message', messageRouter);
 app.use('/property/', propertyRouter);
 app.use('/rentals/', rentalRouter);
 

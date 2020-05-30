@@ -219,6 +219,37 @@ function getAllUserRentals(uid) {
         });
 }
 
+function getNewMessages(uid) {
+    return MessageModel.find({
+        to: uid,
+        seen: false
+    }).then(messages => {
+        const promises = [];
+        for (const message of messages) {
+            promises.push(message.update({
+                $set: {seen: true}
+            }).catch(err => {
+                console.error("[ERR] db update : " + err)
+            }));
+        }
+        promises.push(Promise.resolve(messages)); // keep messages for next step
+        return Promise.all(promises);
+    }).then(resolvedPromises => {
+        const jsonMessages = [];
+        if (resolvedPromises.length === 0) return Promise.resolve(jsonMessages);
+        const messages = resolvedPromises[resolvedPromises.length - 1];
+        for (const message of messages) jsonMessages.push(message.toJSON());
+        return Promise.resolve(jsonMessages);
+    });
+}
+
+function getOldMessages(uid) {
+    return MessageModel.find({
+        to: uid,
+        seen: true
+    });
+}
+
 function getOwnersProperties(owner) {
     return PropertyModel.find({owner: owner});
 }
@@ -323,17 +354,6 @@ function storeMessage(activity) {
             promises.push(storeMessageAux(activity, actor));
     }
     return Promise.all(promises);
-}
-
-function storeMessageAux(activity, recipient) {
-    const newMessage = new MessageModel({
-        url: activity.id,
-        to: recipient
-    });
-    return newMessage.save()
-        .catch(err => {
-            console.error("[ERR] not able to store a message in DB : " + err);
-        });
 }
 
 function updateProperty(activity) {
@@ -454,6 +474,17 @@ function resetTime(dateISOString) {
     return part[0] + "T00:00:00.000Z"
 }
 
+function storeMessageAux(activity, recipient) {
+    const newMessage = new MessageModel({
+        url: activity.id,
+        to: recipient
+    });
+    return newMessage.save()
+        .catch(err => {
+            console.error("[ERR] not able to store a message in DB : " + err);
+        });
+}
+
 module.exports = {
     acceptRentals,
     addComment,
@@ -461,6 +492,8 @@ module.exports = {
     cancelBooking,
     createNewProperty,
     getAllUserRentals,
+    getNewMessages,
+    getOldMessages,
     getOwnersProperties,
     getPropertyDetails,
     getSpecificUserRental,
