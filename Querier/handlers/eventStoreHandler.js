@@ -51,7 +51,27 @@ function onNewEvent(sub, event) {
             else return forwardInformation(eventType, activity.actor, dbUpdateResult);
         })
         .then(_ => console.log("Event \'" + eventType + "\' correctly processed."))
-        .catch(err => console.error("[ERR] ES/onNewEvent : " + err));
+        .catch(err => catcher(err, activity, eventType));
+}
+
+function catcher(err, activity, eventType) {
+    if (err.name === "ValidationError") {
+        const propertyID = activity.object.content.property;
+        const errField = Object.keys(err.errors)[0];
+        fw.forwardErrorMessage(activity.actor, propertyID, eventType, err.errors[errField].message);
+        return;
+    }
+    if (err.name === "MongoError" && err.code === 11000) {
+        const propertyID = activity.object.content.property;
+        fw.forwardErrorMessage(activity.actor, propertyID, eventType, "Duplication:" + Object.keys(err.keyValue));
+        return;
+    }
+    if (err.name === "MyNotFoundError") {
+        const propertyID = activity.object.content.property;
+        fw.forwardErrorMessage(activity.actor, propertyID, eventType, err.message);
+        return;
+    }
+    console.log("[ERR] ES/onNewEvent : " + err);
 }
 
 function initProjection() {
