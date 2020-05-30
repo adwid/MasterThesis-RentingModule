@@ -16,7 +16,7 @@ const eventCallback = {
     'cancel':   {dbFunction: db.cancelBooking,      fwFunction: undefined},
     'comment':  {dbFunction: db.addComment,         fwFunction: undefined},
     'create':   {dbFunction: db.createNewProperty,  fwFunction: fw.forwardToOwner},
-    'delete':   {dbFunction: db.deleteProperty,     fwFunction: undefined},
+    'delete':   {dbFunction: db.deleteProperty,     fwFunction: fw.forwardToOwner},
     'message':  {dbFunction: db.storeMessage,       fwFunction: undefined},
     'reject':   {dbFunction: db.rejectBookings,     fwFunction: undefined},
     'update':   {dbFunction: db.updateProperty,     fwFunction: undefined},

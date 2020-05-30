@@ -199,7 +199,7 @@ function deleteProperty(activity) {
         _id: pid,
         owner: owner
     }).then(doc => {
-        if (!doc) return Promise.resolve();
+        if (!doc) return Promise.reject({name:"MyNotFoundError", message:"No property found, or you don't have the permission"});
         deleteSome(RentalModel, doc.waitingList);
         deleteSome(RentalModel, doc.rentals); // todo inform
         deleteSome(CommentModel, doc.comments);
