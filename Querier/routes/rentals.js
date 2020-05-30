@@ -19,6 +19,16 @@ router.get("/all", function (req, res) {
 
 });
 
+router.get("/secretary", (req, res) => {
+    res.json({
+        "@context": "http://www.w3.org/ns/activitystreams",
+        "type": "Application",
+        "name": "Rental module secretariat",
+        "summary": "In charge of processing all messages concerning the rental module (domain " +
+            process.env.PREFIX + process.env.HOST + ")"
+    })
+});
+
 router.get("/specific", function (req, res) {
     if (!req.query.uid || !req.query.rid) {
         res.status(400).end();
