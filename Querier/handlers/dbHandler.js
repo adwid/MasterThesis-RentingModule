@@ -324,7 +324,7 @@ function rejectBookings(activity) {
     });
 }
 
-function searchPropery(query) {
+function searchProperty(query) {
     let request = {};
     if (query.hasOwnProperty("capmin")) request.capacity = {"$gte": query.capmin};
     if (query.hasOwnProperty("capmax"))
@@ -507,7 +507,7 @@ module.exports = {
     getSpecificUserRental,
     deleteProperty,
     rejectBookings,
-    searchPropery,
+    searchProperty,
     storeMessage,
     updateProperty,
 };

@@ -3,7 +3,7 @@ var router = express.Router();
 const db = require('../handlers/dbHandler');
 
 router.get("/search", function (req, res) {
-    db.searchPropery(req.query)
+    db.searchProperty(req.query)
         .then(properties => {
             res.send(properties);
         })
