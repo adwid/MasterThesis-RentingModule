@@ -2,6 +2,7 @@ const PropertyModel = require('../models/property');
 const RentalModel = require('../models/rental');
 const CommentModel = require('../models/comment');
 const MessageModel = require('../models/message');
+const { v1: uuid } = require('uuid');
 
 function acceptRentals(activity) {
     const noteObject = activity.object;
@@ -185,7 +186,7 @@ function cancelBooking(activity) {
 function createNewProperty(activity) {
     const noteObject = activity.object;
     var content = noteObject.content;
-    content._id = noteObject.id;
+    content._id = process.env.PREFIX + process.env.HOST + ":" + process.env.RENTAL_QUERIER_PORT + "/rental/property/" + uuid();
     const newProperty = new PropertyModel(content);
     return newProperty.save();
 }
@@ -240,6 +241,12 @@ function getNewMessages(uid) {
         const messages = resolvedPromises[resolvedPromises.length - 1];
         for (const message of messages) jsonMessages.push(message.toJSON());
         return Promise.resolve(jsonMessages);
+    });
+}
+
+function getPropertyByID(id) {
+    return PropertyModel.findOne({
+        _id: id
     });
 }
 
@@ -495,6 +502,7 @@ module.exports = {
     getNewMessages,
     getOldMessages,
     getOwnersProperties,
+    getPropertyByID,
     getPropertyDetails,
     getSpecificUserRental,
     deleteProperty,
