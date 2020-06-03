@@ -22,10 +22,12 @@ router.get("/all", function (req, res) {
 router.get("/secretary", (req, res) => {
     res.json({
         "@context": "http://www.w3.org/ns/activitystreams",
+        "id": process.env.PREFIX + process.env.HOST + ":" + process.env.RENTAL_QUERIER_PORT + "/rental/secretary",
         "type": "Application",
         "name": "Rental module secretariat",
         "summary": "In charge of processing all messages concerning the rental module (domain " +
-            process.env.PREFIX + process.env.HOST + ")"
+            process.env.PREFIX + process.env.HOST + ")",
+        "inbox": process.env.PREFIX + process.env.HOST + ":" + process.env.RENTAL_INBOX_PORT + "/rental/secretary",
     })
 });
 
