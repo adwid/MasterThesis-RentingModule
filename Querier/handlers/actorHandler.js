@@ -18,7 +18,7 @@ function getInboxAddresses(userIDs) {
 function convertAddress(addr) {
     let regExp = /https?:\/\/([0-9]{1,3}\.){3,3}[0-9]:[0-9]+(\/inbox)?\/([A-Z]*[a-z]*[0-9]*)+/gi;
     let url = addr.match(regExp) ? process.env.PREFIX + process.env.HOST + ":" + process.env.RENTAL_INBOX_PORT : recipient.data.inbox;
-    return url + "/rental/message"
+    return url + "/rental/news"
 }
 
 module.exports = {
