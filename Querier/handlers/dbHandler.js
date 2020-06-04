@@ -237,7 +237,7 @@ function getNewNews(uid) {
     }).then(news => {
         const promises = [];
         for (const newsItem of news) {
-            promises.push(newsItem.update({
+            promises.push(newsItem.updateOne({
                 $set: {seen: true}
             }).catch(err => {
                 console.error("[ERR] db update : " + err)
