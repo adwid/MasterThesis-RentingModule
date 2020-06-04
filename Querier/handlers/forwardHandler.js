@@ -1,6 +1,7 @@
 const { v1: uuid } = require('uuid');
 const axios = require('axios');
 const actorHandler = require('./actorHandler');
+const db = require('./dbHandler');
 
 function forwardErrorMessage(actor, rideID, type, message) {
     send(actor, {
@@ -21,10 +22,13 @@ function send(actor, content) {
     return actorHandler.getInboxAddresses(actor)
         .then(addr => {
             if (addr.length === 0) return Promise.reject("(send) no inbox addr found.");
-            return axios.post(addr[0], activity)
+            return db.storeActivity(activity).then(_ => { return addr[0] });
+        })
+        .then(addr => {
+            return axios.post(addr, activity)
         })
         .catch(err => {
-            console.error("[ERR] unable to send message (" + addr + ") ; " + err);
+            console.error("[ERR] unable to send message (" + actor + ") : " + err)
             return Promise.resolve();
         });
 }
@@ -40,14 +44,14 @@ function objectToActivity(to, content) {
     const secretary = process.env.PREFIX + process.env.HOST + ":" + process.env.RENTAL_QUERIER_PORT + '/rental/secretary';
     return {
         "@context": "https://www.w3.org/ns/activitystreams",
-        "id": process.env.PREFIX + process.env.HOST + ":" + process.env.RENTAL_QUERIER_PORT + "/rental/" + uuid(),
+        "id": process.env.PREFIX + process.env.HOST + ":" + process.env.RENTAL_QUERIER_PORT + "/rental/message/" + uuid(),
         "type": "Create",
         "to": to,
         "actor": secretary,
         "published": (new Date()).toISOString(),
         "object": {
             "@context": "https://www.w3.org/ns/activitystreams",
-            "id": process.env.PREFIX + process.env.HOST + ":" + process.env.RENTAL_QUERIER_PORT + "/rental/" + uuid(),
+            "id": process.env.PREFIX + process.env.HOST + ":" + process.env.RENTAL_QUERIER_PORT + "/rental/message" + uuid(),
             "type": "Note",
             "mediaType": "application/json",
             "attributedTo": secretary,

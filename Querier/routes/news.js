@@ -1,7 +1,7 @@
 var express = require('express');
 var router = express.Router();
 const db = require('../handlers/dbHandler');
-const esHandler = require('../handlers/eventStoreHandler');
+const axios = require('axios');
 
 router.get("/new/:uid", (req, res) => {
     processRequest(db.getNewNews, req.params.uid, res);
@@ -19,12 +19,20 @@ function processRequest(dbFunction, uid, response) {
                 // interrupt the then-chain:
                 return Promise.reject('NoNews');
             }
-            const ids = [];
-            for (const m of news) ids.push(m.url);
-            return esHandler.getSpecificObjects(ids);
+            const promises = [];
+            for (const n of news) {
+                const promise = axios.get(n.message)
+                    .then(response => { return Promise.resolve(response.data) })
+                    .catch(err => {
+                        console.error("[ERR] Get a message : " + err);
+                        return Promise.resolve(undefined);
+                    })
+                promises.push(promise);
+            }
+            return Promise.all(promises);
         })
-        .then(esResult => {
-            response.json(esResult.list);
+        .then(messages => {
+            response.json(messages.filter(msg => msg !== undefined));
         })
         .catch((err) => {
             if (err === "NoNews") return; // used to interrupt the then-chain

@@ -1,7 +1,6 @@
 var express = require('express');
 var router = express.Router();
 const db = require('../handlers/dbHandler');
-const es = require('../handlers/eventStoreHandler');
 
 router.get("/all", function (req, res) {
     if (!req.query.uid) {
@@ -46,18 +45,16 @@ router.get("/specific", function (req, res) {
         });
 });
 
-router.get("/:id", (req, res) => {
+router.get("/message/:id", (req, res) => {
     var fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
-    es.getSpecificObjects([fullUrl])
-        .then(esResponse => {
-            const list = esResponse.list;
-            if (!list || list.length === 0) res.status(204).end();
-            else if (list.length === 1) res.json(list[0]);
-            else return Promise.reject("The projection counted more than one event for the ID : " + fullUrl);
+    db.getActivity(fullUrl)
+        .then(activity => {
+            if (!activity) return res.status(204).end();
+            res.json(activity);
         })
         .catch(err => {
-            console.error("[ERR] ES projection : " + err);
-            res.status(500).json({error: "Internal error. Please try later or contact admins"});
+            console.error("[ERR] get activity: " + err);
+            res.status(500).json({error: "An internal occurred. Please try later or contact admins."})
         });
 });
 

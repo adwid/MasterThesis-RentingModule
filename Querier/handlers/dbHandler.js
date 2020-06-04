@@ -2,6 +2,7 @@ const PropertyModel = require('../models/property');
 const RentalModel = require('../models/rental');
 const CommentModel = require('../models/comment');
 const NewsModel = require('../models/news');
+const MessageModel = require('../models/message');
 const { v1: uuid } = require('uuid');
 
 function acceptRentals(activity) {
@@ -207,6 +208,15 @@ function deleteProperty(activity) {
     });
 }
 
+function getActivity(id) {
+    return MessageModel.findOne({
+        $or: [
+            {id: id},
+            {"object.id": id}
+        ]
+    }, "-_id -__v")
+}
+
 function getAllUserRentals(uid) {
     return RentalModel.find({
         by: uid
@@ -349,6 +359,12 @@ function searchProperty(query) {
             }
             return Promise.resolve(properties);
         });
+}
+
+function storeActivity(activity) {
+    const message = new MessageModel(activity);
+    message._id = activity.id
+    return message.save();
 }
 
 function storeNews(activity) {
@@ -498,6 +514,7 @@ module.exports = {
     bookProperty,
     cancelBooking,
     createNewProperty,
+    getActivity,
     getAllUserRentals,
     getNewNews,
     getOldNews,
@@ -508,6 +525,7 @@ module.exports = {
     deleteProperty,
     rejectBookings,
     searchProperty,
+    storeActivity,
     storeNews,
     updateProperty,
 };
