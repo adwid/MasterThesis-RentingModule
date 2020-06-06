@@ -3,9 +3,9 @@ const axios = require('axios');
 const actorHandler = require('./actorHandler');
 const db = require('./dbHandler');
 
-function forwardErrorMessage(actor, rideID, type, message) {
+function forwardErrorMessage(actor, id, type, message) {
     send(actor, {
-        "url": rideID,
+        "url": id,
         "type": "error",
         "error": type + ":::" + message,
     }).then(_ => {
@@ -36,8 +36,8 @@ function forwardDeletion(type, from, dbObject) {
     return send(dbObject.owner, {"url": dbObject._id, "from": from, "name": dbObject.name, "type": type});
 }
 
-function forwardToOwner(type, from, dbObject) {
-    return send(dbObject.owner, {"url": dbObject._id, "from": from, "type": type});
+function forwardToActor(type, from, dbObject) {
+    return send(from, {"url": dbObject._id, "from": from, "type": type});
 }
 
 function send(actor, content) {
@@ -89,5 +89,5 @@ module.exports = {
     forwardBooking,
     forwardDeletion,
     forwardErrorMessage,
-    forwardToOwner,
+    forwardToActor,
 };

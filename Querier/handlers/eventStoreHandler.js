@@ -8,13 +8,13 @@ const esConnection = esClient.connection();
 const eventCallback = {
     'accept':   {dbFunction: db.acceptRentals,      fwFunction: fw.forwardAcceptedAndObsolete},
     'book':     {dbFunction: db.bookProperty,       fwFunction: fw.forwardBooking},
-    'cancel':   {dbFunction: db.cancelBooking,      fwFunction: undefined},         // todo
+    'cancel':   {dbFunction: db.cancelBooking,      fwFunction: fw.forwardToActor},
     'comment':  {dbFunction: db.addComment,         fwFunction: undefined},         // todo
-    'create':   {dbFunction: db.createNewProperty,  fwFunction: fw.forwardToOwner},
+    'create':   {dbFunction: db.createNewProperty,  fwFunction: fw.forwardToActor},
     'delete':   {dbFunction: db.deleteProperty,     fwFunction: fw.forwardDeletion}, // todo (see db handler)
     'news':     {dbFunction: db.storeNews,          fwFunction: undefined},         // todo (+test to rebook after reject the conflict)
     'reject':   {dbFunction: db.rejectBookings,     fwFunction: undefined},         // todo
-    'update':   {dbFunction: db.updateProperty,     fwFunction: fw.forwardToOwner},
+    'update':   {dbFunction: db.updateProperty,     fwFunction: fw.forwardToActor},
 };
 
 esConnection.subscribeToStream(streamName, false, onNewEvent)
@@ -59,8 +59,9 @@ function catcher(err, activity, eventType) {
         return;
     }
     if (err.name === "MyNotFoundError") {
-        const propertyID = activity.object.content.property;
-        fw.forwardErrorMessage(activity.actor, propertyID, eventType, err.message);
+        const ID = activity.object.content.property
+            || activity.object.content.booking;
+        fw.forwardErrorMessage(activity.actor, ID, eventType, err.message);
         return;
     }
     console.log("[ERR] ES/onNewEvent : " + err);

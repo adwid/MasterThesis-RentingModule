@@ -165,22 +165,23 @@ function cancelBooking(activity) {
 
     return RentalModel.findOne({
         _id: bookingID,
-        by: userID
+        by: userID,
+        accepted: {$ne: true},
     })
-        .populate('concern') // get the property
         .then(rental => {
-            const property = rental.concern;
+            if (!rental) return Promise.reject({name:"MyNotFoundError", message:"No property found, rental already accepted," +
+                    " or you don't have the permission"});
             return PropertyModel.findOneAndUpdate({
-                _id: property._id
+                _id: rental.concern
             }, {
                 $pull: {
-                    rentals: {$in: [bookingID]},
-                    waitingList: {$in: [bookingID]}
+                    waitingList: {$in: [bookingID]},
                 }
             });
         })
-        .then(_ => {
-            return deleteSome(RentalModel, [bookingID]);
+        .then(property => {
+            deleteSome(RentalModel, [bookingID]); // todo check
+            return property;
         });
 }
 
