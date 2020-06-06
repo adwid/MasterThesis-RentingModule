@@ -6,15 +6,15 @@ const streamName = "rental";
 const esConnection = esClient.connection();
 
 const eventCallback = {
-    'accept':   {dbFunction: db.acceptRentals,      fwFunction: undefined},
-    'book':     {dbFunction: db.bookProperty,       fwFunction: undefined},
-    'cancel':   {dbFunction: db.cancelBooking,      fwFunction: undefined},
-    'comment':  {dbFunction: db.addComment,         fwFunction: undefined},
+    'accept':   {dbFunction: db.acceptRentals,      fwFunction: fw.forwardAcceptedAndObsolete},
+    'book':     {dbFunction: db.bookProperty,       fwFunction: fw.forwardBooking},
+    'cancel':   {dbFunction: db.cancelBooking,      fwFunction: undefined},         // todo
+    'comment':  {dbFunction: db.addComment,         fwFunction: undefined},         // todo
     'create':   {dbFunction: db.createNewProperty,  fwFunction: fw.forwardToOwner},
-    'delete':   {dbFunction: db.deleteProperty,     fwFunction: fw.forwardToOwner},
-    'news':     {dbFunction: db.storeNews,          fwFunction: undefined},
-    'reject':   {dbFunction: db.rejectBookings,     fwFunction: undefined},
-    'update':   {dbFunction: db.updateProperty,     fwFunction: undefined},
+    'delete':   {dbFunction: db.deleteProperty,     fwFunction: fw.forwardDeletion}, // todo (see db handler)
+    'news':     {dbFunction: db.storeNews,          fwFunction: undefined},         // todo (+test to rebook after reject the conflict)
+    'reject':   {dbFunction: db.rejectBookings,     fwFunction: undefined},         // todo
+    'update':   {dbFunction: db.updateProperty,     fwFunction: fw.forwardToOwner},
 };
 
 esConnection.subscribeToStream(streamName, false, onNewEvent)

@@ -9,51 +9,56 @@ function acceptRentals(activity) {
     const noteObject = activity.object;
     const ownerID = noteObject.attributedTo;
     const propertyID = noteObject.content.property;
-    let acceptedBookingsIDs = noteObject.content.bookings;
+    let acceptedIDs = noteObject.content.bookings;
     let findRequest = {
         _id: propertyID,
         owner: ownerID
     };
 
-    PropertyModel
+    return PropertyModel
         .findOne(findRequest)
         .populate('waitingList')
         .then(property => {
-            if (!property) return Promise.resolve();
+            if (!property) return Promise.reject({name:"MyNotFoundError", message:"The property does not exist or you do not have the permission"});
+            const acceptedBookings      = [];
+            const acceptedBookingsIDs   = [];
+            const obsoleteBookings      = [];
+            const obsoleteBookingsIDs   = [];
 
-            const acceptedBookings = [];
-            let tmp = [];
-            for (var booking of property.waitingList) { // get objects and filter unexisting IDs
-                if (acceptedBookingsIDs.includes(booking._id.toString())) {
-                    tmp.push(booking._id);
+            for (const booking of property.waitingList) {
+                if (acceptedIDs.includes(booking._id)) {
                     acceptedBookings.push(booking);
+                    acceptedBookingsIDs.push(booking._id);
+                }
+                else if (isBookingObsolete(booking, acceptedIDs, property.waitingList)) {
+                    obsoleteBookings.push(booking);
+                    obsoleteBookingsIDs.push(booking._id);
                 }
             }
-            acceptedBookingsIDs = tmp;
 
-            const obsoleteBookingsIDs = getObsoleteBookingsID(acceptedBookings, property.waitingList);
-            const bookingsToRemove = [...acceptedBookingsIDs, ...obsoleteBookingsIDs];
+            if (acceptedBookingsIDs.length === 0) return Promise.reject({name:"MyNotFoundError", message:"None of the accepted rentals exist"});
 
             const updateRequest = {
-                $addToSet: {
-                    rentals: {
-                        $each: acceptedBookingsIDs
-                    }
-                },
-                $pull: {
-                    waitingList: {$in: bookingsToRemove}
-                }
+                $addToSet: { rentals: { $each: acceptedBookingsIDs } },
+                $pull: { waitingList: {$in: [...acceptedBookingsIDs, ...obsoleteBookingsIDs]} }
             };
 
-            deleteSome(RentalModel, obsoleteBookingsIDs); // todo inform bookers !
-            return PropertyModel.findOneAndUpdate(findRequest, updateRequest);
+            return Promise.all([
+                PropertyModel.findOneAndUpdate(findRequest, updateRequest), // 0
+                acceptedBookings,       // 1
+                acceptedBookingsIDs,    // 2
+                obsoleteBookings,       // 3
+                obsoleteBookingsIDs,    // 4
+            ])
         })
-        .then(_ => {
-            return RentalModel.updateMany({
-                _id: {$in: acceptedBookingsIDs}
-            }, {
-                $set: {accepted: true}
-            })
+        .then( promisesResult => {
+            return Promise.all([
+                RentalModel.updateMany({ _id: {$in: promisesResult[2]} }, { $set: {accepted: true} }),  // 0
+                RentalModel.updateMany({ _id: {$in: promisesResult[4]} }, { $set: {accepted: false} }), // 1
+                promisesResult[1],  // 2, accepted
+                promisesResult[3],  // 3, obsolete
+                propertyID,         // 4
+            ]);
         });
 }
 
@@ -115,15 +120,16 @@ function bookProperty(activity) {
     const content = noteObject.content;
 
     return PropertyModel.findById(content.property).populate('rentals')
-        .then(doc => {
+        .then(property => {
+            if (!property) return Promise.reject({name:"MyNotFoundError", message:"The property does not exist"});
+
             content.from = resetTime(content.from);
             content.to = resetTime(content.to);
-
-            if (!doc) return Promise.reject({requestErr: "Property does not exist"});
-            var index = searchIndexOfPreviousRental(doc.rentals, content.from, content.to);
-            if (index === -2) return Promise.reject({requestErr: "This booking is in conflict with another one"});
+            var index = searchIndexOfPreviousRental(property.rentals, content.from, content.to);
+            if (index === -2) return Promise.reject({name:"MyNotFoundError", message:"Your booking is in conflict with an accepted one"});
 
             const rental = new RentalModel({
+                _id: process.env.PREFIX + process.env.HOST + ":" + process.env.RENTAL_QUERIER_PORT + "/rental/specific/" + uuid(),
                 concern: content.property,
                 from: content.from,
                 to: content.to,
@@ -131,31 +137,25 @@ function bookProperty(activity) {
                 made: (new Date()).toISOString(),
             });
 
-            return rental.save()
+            return Promise.all([
+                rental.save(),  // 0
+                property,       // 1
+            ])
         })
-        .then(doc => {
-            if (!doc) return Promise.reject("Rental saved but no document -> Adding it to waitingList is impossible");
+        .then(promisesResult => {
             return PropertyModel.findOneAndUpdate({
                 _id: content.property
             }, {
                 $addToSet: {
-                    waitingList: doc._id
+                    waitingList: promisesResult[0]._id
+                }
+            }).then(_ => {
+                return {
+                    rental: promisesResult[0]._id,
+                    owner: promisesResult[1].owner,
                 }
             });
         })
-        .catch(err => {
-            if (!!err && err.errmsg.includes("duplicate")) {
-                err = {
-                    requestErr: "This booking already exists"
-                }
-            }
-            if (!!err && !!err.requestErr) {
-                console.log("Error with the request: " + err.requestErr);
-                // todo inform the request's user
-                return Promise.resolve();
-            }
-            return Promise.reject(err);
-        });
 }
 
 function cancelBooking(activity) {
@@ -274,10 +274,10 @@ function getOwnersProperties(owner) {
 function getPropertyDetails(owner, property) {
     return PropertyModel.findOne({
         _id: property
-    })
-        .populate('rentals')
-        .populate('waitingList')
-        .populate('comments')
+    },"-__v")
+        .populate('rentals', '__v')
+        .populate('waitingList', '-__v')
+        .populate('comments', '__v')
         .then(property => {
             if (!property || property.owner === owner) {
                 return Promise.resolve(property);
@@ -295,13 +295,12 @@ function getPropertyDetails(owner, property) {
         });
 }
 
-function getSpecificUserRental(uid, rid) {
+function getSpecificUserRental(rid) {
     return RentalModel.findOne({
         _id: rid,
-        by: uid
-    }).populate('concern')
+    }, '-__v').populate('concern', '-__v -waitingList -rentals -comments')
         .then(rental => {
-            return Promise.resolve(cleanRental(rental));
+            return Promise.resolve(rental);
         });
 }
 
@@ -397,37 +396,32 @@ function updateProperty(activity) {
         owner: owner
     }, {
         $set: setters
-    }) // todo catch error if user input does not respect property model ?
+    }, {
+        runValidators: true,
+    }).then(doc => {
+        if (!doc) return Promise.reject({name:"MyNotFoundError", message:"No property found, or you don't have the permission"});
+        return Promise.resolve(doc);
+    });
 }
 
 /*-------------------------------------------------------------*/
 /* PRIVATE FUNCTIONS */
 /*-------------------------------------------------------------*/
 
-function getObsoleteBookingsID(acceptedBookings, allBookings) {
-    const obsoleteBookingsID = [];
+function isBookingObsolete(suspiciousBooking, acceptedBookingsIDs, allBookings) {
     for (const booking of allBookings) {
-        if (acceptedBookings.includes(booking)) {
-            continue;
-        }
-        if (booking.from < (new Date()).toISOString()) {
-            obsoleteBookingsID.push(booking._id);
-        } else {
-            for (const acceptedBooking of acceptedBookings) {
-                //
-                // Negation of next condition (thanks to De Morgan Theorem)
-                // if ((booking.from < acceptedBooking.from && booking.to <= acceptedBooking.from)
-                //     || (booking.from >= acceptedBooking.to && booking.to > acceptedBooking.to))
-                //
-                if ((booking.from >= acceptedBooking.from || booking.to > acceptedBooking.from)
-                    && (booking.from < acceptedBooking.to || booking.to <= acceptedBooking.to)) {
-                    obsoleteBookingsID.push(booking._id);
-                    break;
-                }
-            }
+        if(!acceptedBookingsIDs.includes(booking._id)) continue;
+        if (suspiciousBooking.from < (new Date()).toISOString()) return true;
+        // Negation of next condition (thanks to De Morgan Theorem)
+        // if ((suspiciousBooking.from < booking.from && suspiciousBooking.to <= booking.from)
+        //     || (suspiciousBooking.from >= booking.to && suspiciousBooking.to > booking.to))
+        if ((suspiciousBooking.from >= booking.from || suspiciousBooking.to > booking.from)
+            && (suspiciousBooking.from < booking.to || suspiciousBooking.to <= booking.to)) {
+            return true;
         }
     }
-    return obsoleteBookingsID;
+
+    return false;
 }
 
 function deleteSome(Model, ids) { // todo check for each usage if it needs to inform concerned users

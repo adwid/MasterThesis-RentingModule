@@ -13,8 +13,31 @@ function forwardErrorMessage(actor, rideID, type, message) {
     });
 }
 
+function forwardAcceptedAndObsolete(type, from, dbObject) { // TODO CURRENT TEST ACCEPT + COMMIT !!
+    const promises = [];
+    const acceptedBookings = dbObject[2];
+    const obsoleteBookings = dbObject[3];
+    const propertyID = dbObject[4];
+    promises.push(send(from, {"url": propertyID, "from": from, "type": type}))
+    for (const booking of acceptedBookings) promises.push(
+        send(booking.by, {"url": booking._id, "from": from, "type": type})
+    )
+    for (const booking of obsoleteBookings) promises.push(
+        send(booking.by, {"url": booking._id, "from": from, "type": "reject"})
+    )
+    return Promise.all(promises);
+}
+
+function forwardBooking(type, from, dbObject) {
+    return sendMany([dbObject.owner, from], {"url": dbObject.rental, "from": from, "type": type})
+}
+
+function forwardDeletion(type, from, dbObject) {
+    return send(dbObject.owner, {"url": dbObject._id, "from": from, "name": dbObject.name, "type": type});
+}
+
 function forwardToOwner(type, from, dbObject) {
-    return send(dbObject.owner, {"url": dbObject._id, "type": type});
+    return send(dbObject.owner, {"url": dbObject._id, "from": from, "type": type});
 }
 
 function send(actor, content) {
@@ -62,6 +85,9 @@ function objectToActivity(to, content) {
 }
 
 module.exports = {
+    forwardAcceptedAndObsolete,
+    forwardBooking,
+    forwardDeletion,
     forwardErrorMessage,
     forwardToOwner,
 };

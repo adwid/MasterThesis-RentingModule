@@ -16,8 +16,8 @@ const PropertySchema = new mongoose.Schema({
     kitchen: {type: Boolean, required: true},
     campfire: {type: Boolean, required: true},
     description: {type: String, default: ""},
-    rentals: {type: [{type: mongoose.Types.ObjectId, ref: RentalModel.modelName}], default: []},
-    waitingList: {type: [{type: mongoose.Types.ObjectId, ref: RentalModel.modelName}], default: []},
+    rentals: {type: [{type: String, ref: RentalModel.modelName}], default: []},
+    waitingList: {type: [{type: String, ref: RentalModel.modelName}], default: []},
     comments: {type: [{type: mongoose.Types.ObjectId, ref: CommentModel.modelName}], default: []},
 });
 

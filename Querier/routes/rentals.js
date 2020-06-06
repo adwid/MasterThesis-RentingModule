@@ -30,12 +30,9 @@ router.get("/secretary", (req, res) => {
     })
 });
 
-router.get("/specific", function (req, res) {
-    if (!req.query.uid || !req.query.rid) {
-        res.status(400).end();
-        return;
-    }
-    db.getSpecificUserRental(req.query.uid, req.query.rid)
+router.get("/specific/:rid", function (req, res) {
+    var fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
+    db.getSpecificUserRental(fullUrl)
         .then(rental => {
             res.send(rental);
         })
