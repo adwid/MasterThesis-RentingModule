@@ -36,6 +36,16 @@ function forwardDeletion(type, from, dbObject) {
     return send(dbObject.owner, {"url": dbObject._id, "from": from, "name": dbObject.name, "type": type});
 }
 
+function forwardReject(type, from, dbObject) {
+    const promises = dbObject.rentals.map(r => {
+        return send(r.by, {"url": r._id, "from": from, "type": type});
+    })
+    return Promise.all([
+        send(dbObject.owner, {"url": dbObject.property, "from": from, "type": type}),
+        ...promises,
+    ])
+}
+
 function forwardToActor(type, from, dbObject) {
     return send(from, {"url": dbObject._id, "from": from, "type": type});
 }
@@ -89,5 +99,6 @@ module.exports = {
     forwardBooking,
     forwardDeletion,
     forwardErrorMessage,
+    forwardReject,
     forwardToActor,
 };

@@ -163,26 +163,22 @@ function cancelBooking(activity) {
     const bookingID = noteObject.content.booking;
     const userID = noteObject.attributedTo;
 
-    return RentalModel.findOne({
+    return RentalModel.findOneAndRemove({
         _id: bookingID,
         by: userID,
         accepted: {$ne: true},
+    }).then(rental => {
+        if (!rental) return Promise.reject({name:"MyNotFoundError", message:"No rental found, rental already accepted," +
+                " or you don't have the permission"});
+        PropertyModel.findOneAndUpdate({
+            _id: rental.concern
+        }, {
+            $pull: {
+                waitingList: bookingID,
+            }
+        }).exec();
+        return {_id: rental.concern};
     })
-        .then(rental => {
-            if (!rental) return Promise.reject({name:"MyNotFoundError", message:"No property found, rental already accepted," +
-                    " or you don't have the permission"});
-            return PropertyModel.findOneAndUpdate({
-                _id: rental.concern
-            }, {
-                $pull: {
-                    waitingList: {$in: [bookingID]},
-                }
-            });
-        })
-        .then(property => {
-            deleteSome(RentalModel, [bookingID]); // todo check
-            return property;
-        });
 }
 
 function createNewProperty(activity) {
@@ -318,19 +314,24 @@ function rejectBookings(activity) {
             rentals: {$in: rejectedBookingsIDs},
             waitingList: {$in: rejectedBookingsIDs}
         }
-    }).then(doc => {
-        // filter IDs that are actually not part of the waitingList/rentals
-        const correctlyRejected = [];
-        for (const elem of doc.waitingList) {
-            if (rejectedBookingsIDs.includes(elem.toString()))
-                correctlyRejected.push(elem);
-        }
-        for (const elem of doc.rentals) {
-            if (rejectedBookingsIDs.includes(elem.toString()))
-                correctlyRejected.push(elem);
-        }
-        deleteSome(RentalModel, correctlyRejected);
-        return Promise.resolve("ok");
+    }).then(property => {
+        if (!property) return Promise.reject({name:"MyNotFoundError", message:"The property does not exist or you do not have the permission"});
+        // filter IDs that actually were not part of the waitingList/rentals
+        const correctlyRejected = rejectedBookingsIDs.filter(item => property.waitingList.includes(item) || property.rentals.includes(item));
+        return RentalModel.find({
+            _id: {$in: correctlyRejected}
+        }).then(rentals => {
+            if (rentals.length === 0) return Promise.reject({name: "MyNotFoundError", message: "No bookings found."});
+            const promises = rentals.map(r => {return r.update({$set: {accepted: false}})});
+            return Promise.all(promises)
+                .then(_ => {
+                    return {
+                        owner: ownerID,
+                        property: propertyID,
+                        rentals: rentals,
+                    };
+                })
+        })
     });
 }
 

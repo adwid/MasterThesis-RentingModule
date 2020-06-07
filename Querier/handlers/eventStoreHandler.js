@@ -13,7 +13,7 @@ const eventCallback = {
     'create':   {dbFunction: db.createNewProperty,  fwFunction: fw.forwardToActor},
     'delete':   {dbFunction: db.deleteProperty,     fwFunction: fw.forwardDeletion}, // todo (see db handler)
     'news':     {dbFunction: db.storeNews,          fwFunction: undefined},         // todo (+test to rebook after reject the conflict)
-    'reject':   {dbFunction: db.rejectBookings,     fwFunction: undefined},         // todo
+    'reject':   {dbFunction: db.rejectBookings,     fwFunction: fw.forwardReject},
     'update':   {dbFunction: db.updateProperty,     fwFunction: fw.forwardToActor},
 };
 
