@@ -40,7 +40,7 @@ function generateCreateCommentActivity(request) {
     return activity;
 }
 
-function generateCreateDeleteActivity(request) {
+function generateCreatePropertyIDActivity(request) {
     const activity = generateCreateObjectActivity(request, objectFields, isValidDelete);
     if (!activity) return undefined;
     return activity;
@@ -162,6 +162,6 @@ module.exports = {
     generateCreateBookActivity,
     generateCreateCancelActivity,
     generateCreateCommentActivity,
-    generateCreateDeleteActivity,
+    generateCreatePropertyIDActivity,
     generateCreateUpdateActivity,
 };

@@ -7,9 +7,11 @@ const routes = [
     "accept",
     "book",
     "cancel",
+    "close",
     "comment",
     "create",
     "delete",
+    "open",
     "reject",
     "update",
 ];

@@ -9,10 +9,12 @@ const eventCallback = {
     'accept':   {dbFunction: db.acceptRentals,      fwFunction: fw.forwardAcceptedAndObsolete},
     'book':     {dbFunction: db.bookProperty,       fwFunction: fw.forwardToBoth},
     'cancel':   {dbFunction: db.cancelBooking,      fwFunction: fw.forwardToActor},
+    'close':    {dbFunction: db.closeProperty,      fwFunction: fw.forwardToActor},
     'comment':  {dbFunction: db.addComment,         fwFunction: fw.forwardToBoth},
     'create':   {dbFunction: db.createNewProperty,  fwFunction: fw.forwardToActor},
     'delete':   {dbFunction: db.deleteProperty,     fwFunction: fw.forwardDeletion},
     'news':     {dbFunction: db.storeNews,          fwFunction: undefined},
+    'open':     {dbFunction: db.openProperty,       fwFunction: fw.forwardToActor},
     'reject':   {dbFunction: db.rejectBookings,     fwFunction: fw.forwardReject},
     'update':   {dbFunction: db.updateProperty,     fwFunction: fw.forwardToActor},
 };

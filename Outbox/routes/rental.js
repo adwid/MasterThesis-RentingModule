@@ -10,9 +10,11 @@ const routes = {
     'accept':   {inboxRoute:    '/accept',  activityGenerator:  requestHandler.generateCreateAcceptActivity},
     'book':     {inboxRoute:    '/book',    activityGenerator:  requestHandler.generateCreateBookActivity},
     'cancel':   {inboxRoute:    '/cancel',  activityGenerator:  requestHandler.generateCreateCancelActivity},
+    'close':    {inboxRoute:    '/close',   activityGenerator:  requestHandler.generateCreatePropertyIDActivity},
     'comment':  {inboxRoute:    '/comment', activityGenerator:  requestHandler.generateCreateCommentActivity},
     'create':   {inboxRoute:    '/create',  activityGenerator:  requestHandler.generateCreateCreateActivity},
-    'delete':   {inboxRoute:    '/delete',  activityGenerator:  requestHandler.generateCreateDeleteActivity},
+    'delete':   {inboxRoute:    '/delete',  activityGenerator:  requestHandler.generateCreatePropertyIDActivity},
+    'open':     {inboxRoute:    '/open',    activityGenerator:  requestHandler.generateCreatePropertyIDActivity},
     'reject':   {inboxRoute:    '/reject',  activityGenerator:  requestHandler.generateCreateAcceptActivity},
     'update':   {inboxRoute:    '/update',  activityGenerator:  requestHandler.generateCreateUpdateActivity},
 };
@@ -58,6 +60,7 @@ router.get("/:id", (req, res) => {
             res.json(activity);
         })
         .catch(err => {
+            if (err.code === 'ECONNREFUSED') return res.status(502).end();
             console.error("[ERR] get activity: " + err);
             res.status(500).json({error: "An internal occurred. Please try later or contact admins."})
         });

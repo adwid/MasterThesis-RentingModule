@@ -101,9 +101,9 @@ function bookProperty(activity) {
     const noteObject = activity.object;
     const content = noteObject.content;
 
-    return PropertyModel.findById(content.property).populate('rentals')
+    return PropertyModel.findOne({_id: content.property, available: true}).populate('rentals')
         .then(property => {
-            if (!property) return Promise.reject({name:"MyNotFoundError", message:"The property does not exist"});
+            if (!property) return Promise.reject({name:"MyNotFoundError", message:"The property does not exist, or the property is closed."});
 
             content.from = resetTime(content.from);
             content.to = resetTime(content.to);
@@ -161,6 +161,10 @@ function cancelBooking(activity) {
         }).exec();
         return {_id: rental.concern};
     })
+}
+
+function closeProperty(activity) {
+    return setAvailability(activity, false);
 }
 
 function createNewProperty(activity) {
@@ -286,6 +290,10 @@ function getSpecificUserRental(rid) {
         .then(rental => {
             return Promise.resolve(rental);
         });
+}
+
+function openProperty(activity) {
+    return setAvailability(activity, true);
 }
 
 function rejectBookings(activity) {
@@ -480,6 +488,28 @@ function resetTime(dateISOString) {
     return part[0] + "T00:00:00.000Z"
 }
 
+function setAvailability(activity, available) {
+    const noteObject = activity.object;
+    const owner = noteObject.attributedTo;
+    const pid = noteObject.content.property;
+    return PropertyModel.findOneAndUpdate({
+        _id: pid,
+        owner: owner,
+        available: !available,
+    }, {
+        $set: {available: available},
+    }).then(property => {
+        if (!property) return Promise.reject({
+            name: "MyNotFoundError",
+            message: "No property found, the property is already "
+                + (available ? "open" : "closed")
+                + ", or you don't have the permission"
+        });
+        return property;
+    })
+}
+
+
 function storeNewsAux(activity, recipient) {
     const newNews = new NewsModel({
         message: activity.id,
@@ -496,6 +526,7 @@ module.exports = {
     addComment,
     bookProperty,
     cancelBooking,
+    closeProperty,
     createNewProperty,
     getActivity,
     getAllUserRentals,
@@ -506,6 +537,7 @@ module.exports = {
     getPropertyDetails,
     getSpecificUserRental,
     deleteProperty,
+    openProperty,
     rejectBookings,
     searchProperty,
     storeActivity,
