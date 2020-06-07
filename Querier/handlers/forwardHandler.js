@@ -13,7 +13,7 @@ function forwardErrorMessage(actor, id, type, message) {
     });
 }
 
-function forwardAcceptedAndObsolete(type, from, dbObject) { // TODO CURRENT TEST ACCEPT + COMMIT !!
+function forwardAcceptedAndObsolete(type, from, dbObject) {
     const promises = [];
     const acceptedBookings = dbObject[2];
     const obsoleteBookings = dbObject[3];
@@ -29,7 +29,7 @@ function forwardAcceptedAndObsolete(type, from, dbObject) { // TODO CURRENT TEST
 }
 
 function forwardDeletion(type, from, dbObject) {
-    return send(dbObject.owner, {"url": dbObject._id, "from": from, "name": dbObject.name, "type": type});
+    return sendMany([from, ...dbObject.bookers], {"url": dbObject._id, "from": from, "details": dbObject.details, "type": type});
 }
 
 function forwardReject(type, from, dbObject) {

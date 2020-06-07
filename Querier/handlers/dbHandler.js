@@ -178,12 +178,28 @@ function deleteProperty(activity) {
     return PropertyModel.findOneAndRemove({
         _id: pid,
         owner: owner
-    }).then(doc => {
-        if (!doc) return Promise.reject({name:"MyNotFoundError", message:"No property found, or you don't have the permission"});
-        deleteSome(RentalModel, doc.waitingList);
-        deleteSome(RentalModel, doc.rentals); // todo inform
-        deleteSome(CommentModel, doc.comments);
-        return Promise.resolve(doc);
+    }).then(property => {
+        if (!property) return Promise.reject({
+            name: "MyNotFoundError",
+            message: "No property found, or you don't have the permission"
+        });
+        return Promise.all([
+            Promise.resolve(property),
+            property.populate("waitingList").populate("rentals").execPopulate(),
+        ])
+    }).then(promisesResult => {
+        const property = promisesResult[0];
+        const propertyPopulated = promisesResult[1];
+        deleteSome(RentalModel, property.waitingList).then();
+        deleteSome(RentalModel, property.rentals).then();
+        deleteSome(CommentModel, property.comments).then();
+        let bookers01 = propertyPopulated.waitingList.map(item => {return item.by})
+        let bookers02 = propertyPopulated.rentals.map(item => {return item.by})
+        return {
+            _id: property._id,
+            bookers: [...new Set([...bookers01, ...bookers02])], // Set used to remove duplicates
+            details: {name: property.name, city: property.city, province: property.province},
+        }
     });
 }
 
@@ -397,11 +413,11 @@ function isBookingObsolete(suspiciousBooking, acceptedBookingsIDs, allBookings) 
     return false;
 }
 
-function deleteSome(Model, ids) { // todo check for each usage if it needs to inform concerned users
-    if (!Array.isArray(ids) || ids.length === 0) return;
+function deleteSome(Model, ids) {
+    if (!Array.isArray(ids) || ids.length === 0) return Promise.resolve();
     return Model.deleteMany({
         _id: {$in: ids}
-    }).catch(err => {
+    }).exec().catch(err => {
         console.error("Err while trying to delete some " + Model.modelName + " : " + err);
         return Promise.reject(err);
     });

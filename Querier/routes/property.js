@@ -17,9 +17,9 @@ router.get("/search", function (req, res) {
         });
 });
 
-router.get("/details/:id", function (req, res) {
-    var fullUrl = req.protocol + '://' + req.get('host') + "/rental/property/" + req.params.id;
-    db.getPropertyDetails(fullUrl)
+router.get("/details", function (req, res) {
+    if (!req.query.hasOwnProperty("id")) return res.status(400).end();
+    db.getPropertyDetails(req.query.id)
         .then(property => {
             res.send(property);
         })
