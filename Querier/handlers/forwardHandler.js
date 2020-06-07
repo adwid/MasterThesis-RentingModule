@@ -28,10 +28,6 @@ function forwardAcceptedAndObsolete(type, from, dbObject) { // TODO CURRENT TEST
     return Promise.all(promises);
 }
 
-function forwardBooking(type, from, dbObject) {
-    return sendMany([dbObject.owner, from], {"url": dbObject.rental, "from": from, "type": type})
-}
-
 function forwardDeletion(type, from, dbObject) {
     return send(dbObject.owner, {"url": dbObject._id, "from": from, "name": dbObject.name, "type": type});
 }
@@ -48,6 +44,10 @@ function forwardReject(type, from, dbObject) {
 
 function forwardToActor(type, from, dbObject) {
     return send(from, {"url": dbObject._id, "from": from, "type": type});
+}
+
+function forwardToBoth(type, from, dbObject) {
+    return sendMany([dbObject.owner, from], {"url": dbObject._id, "from": from, "type": type})
 }
 
 function send(actor, content) {
@@ -96,9 +96,9 @@ function objectToActivity(to, content) {
 
 module.exports = {
     forwardAcceptedAndObsolete,
-    forwardBooking,
     forwardDeletion,
     forwardErrorMessage,
     forwardReject,
     forwardToActor,
+    forwardToBoth,
 };

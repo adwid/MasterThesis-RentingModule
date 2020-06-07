@@ -7,9 +7,9 @@ const esConnection = esClient.connection();
 
 const eventCallback = {
     'accept':   {dbFunction: db.acceptRentals,      fwFunction: fw.forwardAcceptedAndObsolete},
-    'book':     {dbFunction: db.bookProperty,       fwFunction: fw.forwardBooking},
+    'book':     {dbFunction: db.bookProperty,       fwFunction: fw.forwardToBoth},
     'cancel':   {dbFunction: db.cancelBooking,      fwFunction: fw.forwardToActor},
-    'comment':  {dbFunction: db.addComment,         fwFunction: undefined},         // todo
+    'comment':  {dbFunction: db.addComment,         fwFunction: fw.forwardToBoth},
     'create':   {dbFunction: db.createNewProperty,  fwFunction: fw.forwardToActor},
     'delete':   {dbFunction: db.deleteProperty,     fwFunction: fw.forwardDeletion}, // todo (see db handler)
     'news':     {dbFunction: db.storeNews,          fwFunction: undefined},         // todo (+test to rebook after reject the conflict)

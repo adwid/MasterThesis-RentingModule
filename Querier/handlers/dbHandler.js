@@ -71,31 +71,21 @@ function addComment(activity) {
         concern: noteObject.content.property
     });
 
-    return RentalModel.find({ // find rentals...
+    return RentalModel.findOne({ // find rentals...
         concern: noteObject.content.property,   // ...that concern the correct property...
         by: noteObject.attributedTo,            // ...booked by the comment's user...
         to: {$lt: (new Date()).toISOString()}   // ...and that are done
     })
-        .then(rentals => {
-            if (rentals.length === 0) {
-                return Promise.reject({requestErr: "You never booked this property" +
-                        " or the rental is not done."})
-            }
-            const rentalsIDs = [];
-            for (const rental of rentals)
-                rentalsIDs.push(rental._id);
+        .then(rental => {
+            if (!rental) return Promise.reject({name:"MyNotFoundError", message:"The property does not exist, you never booked this property, " +
+                    "or the rental is not done."})
             return PropertyModel.findOne({ // check if property exists
                 _id: noteObject.content.property,
-                rentals: {$elemMatch: {$in: rentalsIDs}}
+                rentals: rental._id,
             })
         })
         .then(property => {
-            if (!property) {
-                return Promise.reject({
-                    requestErr: "The property does not exist, " +
-                        "or you never rented this property"
-                });
-            }
+            if (!property) return Promise.reject({name:"MyNotFoundError", message:"The property does not exist."});
             return comment.save(); // save the comment
         })
         .then(_ => {
@@ -105,14 +95,6 @@ function addComment(activity) {
                 $push: {comments: comment._id}
             })
         })
-        .catch(err => {
-            if (!!err && !!err.requestErr) {
-                console.log("Error with the request: " + err.requestErr);
-                // todo inform the request's user
-                return Promise.resolve();
-            }
-            return Promise.reject(err);
-        });
 }
 
 function bookProperty(activity) {
@@ -151,7 +133,7 @@ function bookProperty(activity) {
                 }
             }).then(_ => {
                 return {
-                    rental: promisesResult[0]._id,
+                    _id: promisesResult[0]._id,
                     owner: promisesResult[1].owner,
                 }
             });
@@ -254,7 +236,7 @@ function getNewNews(uid) {
 function getPropertyByID(id) {
     return PropertyModel.findOne({
         _id: id
-    });
+    }, "-rentals -waitingList -comments -__v");
 }
 
 function getOldNews(uid) {
@@ -268,27 +250,16 @@ function getOwnersProperties(owner) {
     return PropertyModel.find({owner: owner});
 }
 
-function getPropertyDetails(owner, property) {
+function getPropertyDetails(property) {
     return PropertyModel.findOne({
         _id: property
-    },"-__v")
-        .populate('rentals', '__v')
-        .populate('waitingList', '-__v')
-        .populate('comments', '__v')
+    }, "-__v")
         .then(property => {
-            if (!property || property.owner === owner) {
-                return Promise.resolve(property);
-            }
-            property = property.toObject();
-            for (const index in property.waitingList) {
-                delete property.waitingList[index]['_id'];
-                delete property.waitingList[index]['by'];
-            }
-            for (const index in property.rentals) {
-                delete property.rentals[index]['_id'];
-                delete property.rentals[index]['by'];
-            }
-            return Promise.resolve(property);
+            if (!property) return property;
+            return property.populate('rentals', '-__v')
+                .populate('waitingList', '-__v')
+                .populate('comments', '-__v')
+                .execPopulate()
         });
 }
 
