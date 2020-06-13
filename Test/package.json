@@ -1,0 +1,22 @@
+{
+  "name": "test",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "mocha --slow 1000 index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.19.2",
+    "chai": "^4.2.0",
+    "chai-http": "^4.3.0",
+    "clone": "^2.1.2",
+    "deep-equal": "^2.0.3",
+    "dotenv": "^8.2.0",
+    "encodeurl": "^1.0.2",
+    "mocha": "^7.2.0",
+    "mongodb": "^3.5.8"
+  }
+}
