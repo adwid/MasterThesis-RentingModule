@@ -40,7 +40,7 @@ describe("[Rental] Validations", function () {
                 throw err
             });
     })
-
+    this.slow(common.slow);
     beforeEach(done => setTimeout(done, common.timeout));
 
     describe("actor[0] creates a new property", function () {

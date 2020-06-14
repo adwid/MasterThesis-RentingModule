@@ -9,7 +9,7 @@ const actorHelper = require('./helpers/actorHelper');
 const actorsName = ["actor00", "actor01", "actor02", "actor03",];
 
 describe("[RENTAL MODULE]", function () {
-
+    this.slow(common.slow);
     it('should create each user', function (done) {
         actorHelper.init(actorsName)
             .then(actorsID => {

@@ -69,7 +69,7 @@ describe("[Rental] Basic scenario", function () {
                 throw err
             });
     })
-
+    this.slow(common.slow);
     beforeEach(done => setTimeout(done, common.timeout));
 
     it("should get the rental's profile", function (done) {
